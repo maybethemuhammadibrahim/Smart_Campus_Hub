@@ -1,44 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Campus — {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Campus Academic Management System">
+  <title>Smart Campus — {% block title %}Dashboard{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav class="navbar">
-        <span class="brand">Smart Campus</span>
-        {% if session.get('user_id') %}
-        <div class="nav-links">
-            {% if session.role == 'student' %}
-                <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('student.available_courses') }}">Courses</a>
-                <a href="{{ url_for('student.attendance') }}">Attendance</a>
-                <a href="{{ url_for('student.grades') }}">Grades</a>
-            {% elif session.role == 'faculty' %}
-                <a href="{{ url_for('faculty.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('faculty.my_courses') }}">My Courses</a>
-            {% elif session.role == 'admin' %}
-                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('admin.students') }}">Students</a>
-                <a href="{{ url_for('admin.courses') }}">Courses</a>
-                <a href="{{ url_for('admin.reports') }}">Reports</a>
-            {% endif %}
-            <a href="{{ url_for('auth.logout') }}">Logout ({{ session.username }})</a>
-        </div>
-        {% endif %}
+
+  <!-- Mobile Sidebar Toggle -->
+  <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <h1>Smart Campus</h1>
+      <span>Academic Management</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% if session.get('role') == 'student' %}
+        <div class="nav-section-label">Main</div>
+        <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('student.available_courses') }}" class="nav-link {% if request.endpoint == 'student.available_courses' %}active{% endif %}">
+          <span class="nav-icon">📚</span> Courses
+        </a>
+        <a href="{{ url_for('student.attendance') }}" class="nav-link {% if request.endpoint == 'student.attendance' %}active{% endif %}">
+          <span class="nav-icon">📋</span> Attendance
+        </a>
+        <a href="{{ url_for('student.grades') }}" class="nav-link {% if request.endpoint == 'student.grades' %}active{% endif %}">
+          <span class="nav-icon">📝</span> Grades
+        </a>
+        <a href="{{ url_for('student.transcript') }}" class="nav-link {% if request.endpoint == 'student.transcript' %}active{% endif %}">
+          <span class="nav-icon">🎓</span> Transcript
+        </a>
+
+      {% elif session.get('role') == 'faculty' %}
+        <div class="nav-section-label">Main</div>
+        <a href="{{ url_for('faculty.dashboard') }}" class="nav-link {% if request.endpoint == 'faculty.dashboard' %}active{% endif %}">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a href="{{ url_for('faculty.my_courses') }}" class="nav-link {% if request.endpoint == 'faculty.my_courses' %}active{% endif %}">
+          <span class="nav-icon">📚</span> My Courses
+        </a>
+        <div class="nav-section-label">Actions</div>
+        <a href="{{ url_for('faculty.roster') }}" class="nav-link {% if request.endpoint == 'faculty.roster' %}active{% endif %}">
+          <span class="nav-icon">👥</span> Roster
+        </a>
+        <a href="{{ url_for('faculty.mark_attendance') }}" class="nav-link {% if request.endpoint == 'faculty.mark_attendance' %}active{% endif %}">
+          <span class="nav-icon">✅</span> Mark Attendance
+        </a>
+        <a href="{{ url_for('faculty.enter_grades') }}" class="nav-link {% if request.endpoint == 'faculty.enter_grades' %}active{% endif %}">
+          <span class="nav-icon">📝</span> Enter Grades
+        </a>
+
+      {% elif session.get('role') == 'admin' %}
+        <div class="nav-section-label">Overview</div>
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <div class="nav-section-label">Management</div>
+        <a href="{{ url_for('admin.students') }}" class="nav-link {% if request.endpoint == 'admin.students' %}active{% endif %}">
+          <span class="nav-icon">🎓</span> Students
+        </a>
+        <a href="{{ url_for('admin.faculty_list') }}" class="nav-link {% if request.endpoint == 'admin.faculty_list' %}active{% endif %}">
+          <span class="nav-icon">👨‍🏫</span> Faculty
+        </a>
+        <a href="{{ url_for('admin.courses') }}" class="nav-link {% if request.endpoint == 'admin.courses' %}active{% endif %}">
+          <span class="nav-icon">📚</span> Courses
+        </a>
+        <a href="{{ url_for('admin.reports') }}" class="nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+          <span class="nav-icon">📈</span> Reports
+        </a>
+      {% endif %}
     </nav>
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-    </main>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+      {% if session.get('user_id') %}
+        <div class="sidebar-user">
+          <div class="sidebar-user-avatar">{{ session.username[0]|upper }}</div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name">{{ session.username }}</div>
+            <div class="sidebar-user-role">{{ session.role }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-full">⬅ Sign Out</a>
+      {% endif %}
+    </div>
+  </aside>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <!-- Main Content -->
+  <main class="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

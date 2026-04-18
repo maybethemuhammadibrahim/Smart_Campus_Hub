@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Mark Attendance</h1>
+
+<form method="POST" action="{{ url_for('faculty.submit_attendance') }}">
+  <div class="card card-static section-mb">
+    <div class="card-header">Session Details</div>
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
+      <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
+        <label class="form-label" for="course_id">Course</label>
+        <select class="form-input" id="course_id" name="course_id" required>
+          <option value="">Select a course</option>
+          {% for course in courses %}
+            <option value="{{ course.course_id }}" {% if selected_course == course.course_id %}selected{% endif %}>
+              {{ course.course_code }} — {{ course.course_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0; min-width:180px;">
+        <label class="form-label" for="attendance_date">Date</label>
+        <input type="date" class="form-input" id="attendance_date" name="attendance_date" value="{{ today }}" required>
+      </div>
+    </div>
+  </div>
+
+  {% if students %}
+    <div class="table-wrap section-mb">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.first_name }} {{ s.last_name }}</td>
+            <td>
+              <div class="radio-group">
+                <label>
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="present" checked> Present
+                </label>
+                <label>
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="absent"> Absent
+                </label>
+                <label>
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="late"> Late
+                </label>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit Attendance</button>
+  {% else %}
+    <div class="card card-static">
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <h3>No students to mark</h3>
+        <p>Select a course above to see enrolled students.</p>
+      </div>
+    </div>
+  {% endif %}
+</form>
+{% endblock %}

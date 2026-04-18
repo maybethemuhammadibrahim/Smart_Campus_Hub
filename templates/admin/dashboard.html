@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Admin Dashboard</h1>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-number">{{ total_students if total_students else 0 }}</div>
+    <div class="stat-label">Total Students</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_faculty if total_faculty else 0 }}</div>
+    <div class="stat-label">Total Faculty</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_courses if total_courses else 0 }}</div>
+    <div class="stat-label">Total Courses</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ total_enrollments if total_enrollments else 0 }}</div>
+    <div class="stat-label">Total Enrollments</div>
+  </div>
+</div>
+
+<div class="card card-static section-mb">
+  <div class="card-header">Quick Actions</div>
+  <div class="quick-actions">
+    <button class="btn btn-primary" onclick="openModal('addStudentModal')">➕ Add Student</button>
+    <button class="btn btn-primary" onclick="openModal('addFacultyModal')">➕ Add Faculty</button>
+    <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
+  </div>
+</div>
+
+<div class="card card-static">
+  <div class="card-header">Recent Activity</div>
+  {% if recent_activity %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Activity</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for activity in recent_activity %}
+          <tr>
+            <td>{{ activity.date }}</td>
+            <td>{{ activity.type }}</td>
+            <td>{{ activity.details }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <h3>No recent activity</h3>
+      <p>System activity will appear here as events occur.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal-overlay" id="addStudentModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Add New Student</h3>
+      <button class="modal-close" onclick="closeModal('addStudentModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_student') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="s_first_name">First Name</label>
+          <input type="text" class="form-input" id="s_first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_last_name">Last Name</label>
+          <input type="text" class="form-input" id="s_last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_email">Email</label>
+          <input type="email" class="form-input" id="s_email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_program">Program</label>
+          <input type="text" class="form-input" id="s_program" name="program" placeholder="e.g. BS Computer Science" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_batch_year">Batch Year</label>
+          <input type="number" class="form-input" id="s_batch_year" name="batch_year" min="2000" max="2099" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_username">Username</label>
+          <input type="text" class="form-input" id="s_username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="s_password">Password</label>
+          <input type="password" class="form-input" id="s_password" name="password" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addStudentModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Faculty Modal -->
+<div class="modal-overlay" id="addFacultyModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Add New Faculty</h3>
+      <button class="modal-close" onclick="closeModal('addFacultyModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_faculty') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="f_first_name">First Name</label>
+          <input type="text" class="form-input" id="f_first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_last_name">Last Name</label>
+          <input type="text" class="form-input" id="f_last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_email">Email</label>
+          <input type="email" class="form-input" id="f_email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_department">Department</label>
+          <input type="text" class="form-input" id="f_department" name="department" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_designation">Designation</label>
+          <input type="text" class="form-input" id="f_designation" name="designation" placeholder="e.g. Assistant Professor" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_username">Username</label>
+          <input type="text" class="form-input" id="f_username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_password">Password</label>
+          <input type="password" class="form-input" id="f_password" name="password" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addFacultyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Faculty</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Create Course Modal -->
+<div class="modal-overlay" id="createCourseModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Create New Course</h3>
+      <button class="modal-close" onclick="closeModal('createCourseModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.create_course') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="c_course_code">Course Code</label>
+          <input type="text" class="form-input" id="c_course_code" name="course_code" placeholder="e.g. CS301" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c_course_name">Course Name</label>
+          <input type="text" class="form-input" id="c_course_name" name="course_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c_credit_hours">Credit Hours</label>
+          <input type="number" class="form-input" id="c_credit_hours" name="credit_hours" min="1" max="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c_semester">Semester</label>
+          <input type="text" class="form-input" id="c_semester" name="semester" placeholder="e.g. Fall 2026" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c_max_capacity">Max Capacity</label>
+          <input type="number" class="form-input" id="c_max_capacity" name="max_capacity" min="1" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('createCourseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Course</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

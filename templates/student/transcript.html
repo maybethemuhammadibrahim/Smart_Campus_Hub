@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Transcript{% endblock %}
+
+{% block content %}
+<div class="flex-between section-mb">
+  <h1 class="page-title" style="margin-bottom:0;">Academic Transcript</h1>
+  <button class="btn btn-outline btn-print" onclick="window.print()">🖨️ Print Transcript</button>
+</div>
+
+<div class="info-block">
+  <div>
+    <div class="info-item-label">Student Name</div>
+    <div class="info-item-value">{{ student.first_name }} {{ student.last_name }}</div>
+  </div>
+  <div>
+    <div class="info-item-label">Program</div>
+    <div class="info-item-value">{{ student.program if student.program else '—' }}</div>
+  </div>
+  <div>
+    <div class="info-item-label">Batch Year</div>
+    <div class="info-item-value">{{ student.batch_year if student.batch_year else '—' }}</div>
+  </div>
+  <div>
+    <div class="info-item-label">Email</div>
+    <div class="info-item-value">{{ student.email if student.email else '—' }}</div>
+  </div>
+</div>
+
+{% if transcript %}
+  <div class="table-wrap section-mb">
+    <table>
+      <thead>
+        <tr>
+          <th>Course Code</th>
+          <th>Course Name</th>
+          <th>Credit Hours</th>
+          <th>Marks</th>
+          <th>Letter Grade</th>
+          <th>Grade Points</th>
+          <th>Semester</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in transcript %}
+        <tr>
+          <td>{{ row.course_code }}</td>
+          <td>{{ row.course_name }}</td>
+          <td>{{ row.credit_hours if row.credit_hours else '—' }}</td>
+          <td>{{ row.marks if row.marks is not none else '—' }}</td>
+          <td>
+            {% if row.letter_grade %}
+              {% if row.letter_grade in ['A', 'A-'] %}
+                <span class="badge badge-success">{{ row.letter_grade }}</span>
+              {% elif row.letter_grade in ['B+', 'B', 'B-'] %}
+                <span class="badge badge-info">{{ row.letter_grade }}</span>
+              {% elif row.letter_grade in ['C+', 'C'] %}
+                <span class="badge badge-warning">{{ row.letter_grade }}</span>
+              {% elif row.letter_grade == 'F' %}
+                <span class="badge badge-danger">{{ row.letter_grade }}</span>
+              {% else %}
+                <span class="badge">{{ row.letter_grade }}</span>
+              {% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>{{ row.grade_points if row.grade_points is not none else '—' }}</td>
+          <td>{{ row.semester if row.semester else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card card-static section-mb">
+    <div class="empty-state">
+      <div class="empty-state-icon">🎓</div>
+      <h3>No transcript records</h3>
+      <p>Your transcript will be generated once grades are finalized.</p>
+    </div>
+  </div>
+{% endif %}
+
+<div class="cgpa-card">
+  <div class="cgpa-label">Cumulative GPA</div>
+  <div class="cgpa-value">{{ student.cgpa if student.cgpa else '0.00' }}</div>
+</div>
+{% endblock %}

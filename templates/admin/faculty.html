@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Manage Faculty{% endblock %}
+
+{% block content %}
+<div class="flex-between section-mb">
+  <h1 class="page-title" style="margin-bottom:0;">Manage Faculty</h1>
+  <button class="btn btn-primary" onclick="openModal('addFacultyModal')">➕ Add New Faculty</button>
+</div>
+
+{% if faculty_list %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Faculty ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Department</th>
+          <th>Designation</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in faculty_list %}
+        <tr>
+          <td>{{ f.faculty_id }}</td>
+          <td>{{ f.first_name }} {{ f.last_name }}</td>
+          <td>{{ f.email }}</td>
+          <td>{{ f.department if f.department else '—' }}</td>
+          <td>{{ f.designation if f.designation else '—' }}</td>
+          <td>
+            {% if f.is_active %}
+              <span class="badge badge-success">Active</span>
+            {% else %}
+              <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('admin.edit_faculty', faculty_id=f.faculty_id) }}" class="btn btn-outline btn-sm">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card card-static">
+    <div class="empty-state">
+      <div class="empty-state-icon">👨‍🏫</div>
+      <h3>No faculty found</h3>
+      <p>Click "Add New Faculty" to register your first faculty member.</p>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Add Faculty Modal -->
+<div class="modal-overlay" id="addFacultyModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Add New Faculty</h3>
+      <button class="modal-close" onclick="closeModal('addFacultyModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.add_faculty') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="f_first_name">First Name</label>
+          <input type="text" class="form-input" id="f_first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_last_name">Last Name</label>
+          <input type="text" class="form-input" id="f_last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_email">Email</label>
+          <input type="email" class="form-input" id="f_email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_department">Department</label>
+          <input type="text" class="form-input" id="f_department" name="department" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_designation">Designation</label>
+          <input type="text" class="form-input" id="f_designation" name="designation" placeholder="e.g. Assistant Professor" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_username">Username</label>
+          <input type="text" class="form-input" id="f_username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_password">Password</label>
+          <input type="password" class="form-input" id="f_password" name="password" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('addFacultyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Faculty</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

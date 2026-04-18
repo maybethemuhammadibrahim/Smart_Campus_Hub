@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Enter Grades{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Enter Grades — {{ course_name }}</h1>
+
+<form method="POST" action="{{ url_for('faculty.save_grades') }}">
+  <input type="hidden" name="course_id" value="{{ course_id }}">
+
+  {% if students %}
+    <div class="table-wrap section-mb">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Student Name</th>
+            <th>Marks (0–100)</th>
+            <th>Letter Grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ s.first_name }} {{ s.last_name }}</td>
+            <td>
+              <input type="hidden" name="enrollment_id_{{ loop.index }}" value="{{ s.enrollment_id }}">
+              <input type="number" class="form-input" name="marks_{{ s.enrollment_id }}" min="0" max="100" step="0.01"
+                     value="{{ s.marks if s.marks is not none else '' }}" placeholder="0–100"
+                     style="max-width: 120px;">
+            </td>
+            <td>
+              {% if s.letter_grade %}
+                {% if s.letter_grade in ['A', 'A-'] %}
+                  <span class="badge badge-success">{{ s.letter_grade }}</span>
+                {% elif s.letter_grade in ['B+', 'B', 'B-'] %}
+                  <span class="badge badge-info">{{ s.letter_grade }}</span>
+                {% elif s.letter_grade in ['C+', 'C'] %}
+                  <span class="badge badge-warning">{{ s.letter_grade }}</span>
+                {% elif s.letter_grade == 'F' %}
+                  <span class="badge badge-danger">{{ s.letter_grade }}</span>
+                {% else %}
+                  <span class="badge">{{ s.letter_grade }}</span>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 12px;">Not graded</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Grades</button>
+  {% else %}
+    <div class="card card-static">
+      <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <h3>No students enrolled</h3>
+        <p>There are no students enrolled in this course to grade.</p>
+      </div>
+    </div>
+  {% endif %}
+</form>
+{% endblock %}

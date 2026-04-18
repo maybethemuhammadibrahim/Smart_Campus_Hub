@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Reports</h1>
+
+<!-- Enrollment Report -->
+<div class="card card-static section-mb">
+  <div class="card-header">Enrollment Report</div>
+  {% if enrollment_report %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Faculty</th>
+            <th>Enrolled</th>
+            <th>Capacity</th>
+            <th>Fill %</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in enrollment_report %}
+          <tr>
+            <td>{{ row.course_code }}</td>
+            <td>{{ row.course_name }}</td>
+            <td>{{ row.faculty_name if row.faculty_name else '—' }}</td>
+            <td>{{ row.enrolled }}</td>
+            <td>{{ row.capacity }}</td>
+            <td>
+              <div class="progress-info">
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar" data-percentage="{{ row.fill_percentage }}"></div>
+                </div>
+                <span class="progress-text">{{ row.fill_percentage }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📊</div>
+      <h3>No enrollment data</h3>
+      <p>Enrollment report data will appear once courses have enrollments.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- GPA Distribution -->
+<div class="card card-static section-mb">
+  <div class="card-header">GPA Distribution</div>
+  {% if gpa_dist %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>GPA Range</th>
+            <th>Student Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in gpa_dist %}
+          <tr>
+            <td>{{ row.gpa_range }}</td>
+            <td>{{ row.student_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📈</div>
+      <h3>No GPA data</h3>
+      <p>GPA distribution will appear once students have grades.</p>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Faculty Load -->
+<div class="card card-static section-mb">
+  <div class="card-header">Faculty Load</div>
+  {% if faculty_load %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Faculty Name</th>
+            <th>Department</th>
+            <th>Courses</th>
+            <th>Total Students</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in faculty_load %}
+          <tr>
+            <td>{{ row.faculty_name }}</td>
+            <td>{{ row.department if row.department else '—' }}</td>
+            <td>{{ row.course_count }}</td>
+            <td>{{ row.total_students }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">👨‍🏫</div>
+      <h3>No faculty load data</h3>
+      <p>Faculty load information will appear once courses are assigned.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Available Courses{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Available Courses</h1>
+
+{% if courses %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Course Code</th>
+          <th>Course Name</th>
+          <th>Credit Hours</th>
+          <th>Faculty</th>
+          <th>Seats Available</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for course in courses %}
+        <tr>
+          <td>{{ course.course_code }}</td>
+          <td>{{ course.course_name }}</td>
+          <td>{{ course.credit_hours }}</td>
+          <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
+          <td>{{ course.seats_left }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('student.enroll', course_id=course.course_id) }}" style="display:inline;">
+              <button type="submit" class="btn btn-primary btn-sm">Enroll</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card card-static">
+    <div class="empty-state">
+      <div class="empty-state-icon">🎉</div>
+      <h3>No courses available</h3>
+      <p>All available courses are either full or you are already enrolled in them.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Course Roster{% endblock %}
+
+{% block content %}
+<div class="flex-between section-mb">
+  <h1 class="page-title" style="margin-bottom:0;">Course Roster — {{ course_name }}</h1>
+  <button class="btn btn-outline btn-print" onclick="window.print()">🖨️ Export / Print</button>
+</div>
+
+{% if students %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student Name</th>
+          <th>Email</th>
+          <th>Enrollment Date</th>
+          <th>Attendance %</th>
+          <th>Current Grade</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ s.first_name }} {{ s.last_name }}</td>
+          <td>{{ s.email if s.email else '—' }}</td>
+          <td>{{ s.enrolled_at if s.enrolled_at else '—' }}</td>
+          <td>
+            {% if s.attendance_percentage is not none %}
+              <div class="progress-info">
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar" data-percentage="{{ s.attendance_percentage }}"></div>
+                </div>
+                <span class="progress-text">{{ s.attendance_percentage }}%</span>
+              </div>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if s.letter_grade %}
+              {% if s.letter_grade in ['A', 'A-'] %}
+                <span class="badge badge-success">{{ s.letter_grade }}</span>
+              {% elif s.letter_grade in ['B+', 'B', 'B-'] %}
+                <span class="badge badge-info">{{ s.letter_grade }}</span>
+              {% elif s.letter_grade in ['C+', 'C'] %}
+                <span class="badge badge-warning">{{ s.letter_grade }}</span>
+              {% elif s.letter_grade == 'F' %}
+                <span class="badge badge-danger">{{ s.letter_grade }}</span>
+              {% else %}
+                <span class="badge">{{ s.letter_grade }}</span>
+              {% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card card-static">
+    <div class="empty-state">
+      <div class="empty-state-icon">👥</div>
+      <h3>No students enrolled</h3>
+      <p>No students are currently enrolled in this course.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

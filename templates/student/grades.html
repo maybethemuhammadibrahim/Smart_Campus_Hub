@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}My Grades{% endblock %}
+
+{% block content %}
+<h1 class="page-title">My Grades</h1>
+
+<div class="cgpa-card">
+  <div class="cgpa-label">Current CGPA</div>
+  <div class="cgpa-value">{{ cgpa if cgpa else '0.00' }}</div>
+</div>
+
+{% if grades %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Course Code</th>
+          <th>Course Name</th>
+          <th>Marks</th>
+          <th>Total</th>
+          <th>Letter Grade</th>
+          <th>Grade Points</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in grades %}
+        <tr>
+          <td>{{ g.course_code }}</td>
+          <td>{{ g.course_name }}</td>
+          <td>{{ g.marks if g.marks is not none else '—' }}</td>
+          <td>{{ g.total_marks if g.total_marks is not none else '100' }}</td>
+          <td>
+            {% if g.letter_grade %}
+              {% if g.letter_grade in ['A', 'A-'] %}
+                <span class="badge badge-success">{{ g.letter_grade }}</span>
+              {% elif g.letter_grade in ['B+', 'B', 'B-'] %}
+                <span class="badge badge-info">{{ g.letter_grade }}</span>
+              {% elif g.letter_grade in ['C+', 'C'] %}
+                <span class="badge badge-warning">{{ g.letter_grade }}</span>
+              {% elif g.letter_grade == 'F' %}
+                <span class="badge badge-danger">{{ g.letter_grade }}</span>
+              {% else %}
+                <span class="badge">{{ g.letter_grade }}</span>
+              {% endif %}
+            {% else %}
+              <span class="badge">—</span>
+            {% endif %}
+          </td>
+          <td>{{ g.grade_points if g.grade_points is not none else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="card card-static">
+    <div class="empty-state">
+      <div class="empty-state-icon">📝</div>
+      <h3>No grades available</h3>
+      <p>Your grades will appear here once they are entered by your instructors.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

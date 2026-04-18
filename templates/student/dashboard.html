@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Welcome back, {{ student.first_name }}</h1>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-number">{{ enrolled|length }}</div>
+    <div class="stat-label">Enrolled Courses</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ student.cgpa if student.cgpa else '0.00' }}</div>
+    <div class="stat-label">CGPA</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ student.batch_year if student.batch_year else '—' }}</div>
+    <div class="stat-label">Batch Year</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number">{{ student.program if student.program else '—' }}</div>
+    <div class="stat-label">Program</div>
+  </div>
+</div>
+
+<div class="card card-static">
+  <div class="card-header">Enrolled Courses</div>
+  {% if enrolled %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Course Code</th>
+            <th>Course Name</th>
+            <th>Credit Hours</th>
+            <th>Faculty</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for course in enrolled %}
+          <tr>
+            <td>{{ course.course_code }}</td>
+            <td>{{ course.course_name }}</td>
+            <td>{{ course.credit_hours if course.credit_hours else '—' }}</td>
+            <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
+            <td><span class="badge badge-success">Active</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📚</div>
+      <h3>No courses enrolled</h3>
+      <p>Visit the Courses page to enroll in available courses.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
