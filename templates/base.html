@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Campus — {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <span class="brand">Smart Campus</span>
+        {% if session.get('user_id') %}
+        <div class="nav-links">
+            {% if session.role == 'student' %}
+                <a href="{{ url_for('student.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('student.available_courses') }}">Courses</a>
+                <a href="{{ url_for('student.attendance') }}">Attendance</a>
+                <a href="{{ url_for('student.grades') }}">Grades</a>
+            {% elif session.role == 'faculty' %}
+                <a href="{{ url_for('faculty.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('faculty.my_courses') }}">My Courses</a>
+            {% elif session.role == 'admin' %}
+                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('admin.students') }}">Students</a>
+                <a href="{{ url_for('admin.courses') }}">Courses</a>
+                <a href="{{ url_for('admin.reports') }}">Reports</a>
+            {% endif %}
+            <a href="{{ url_for('auth.logout') }}">Logout ({{ session.username }})</a>
+        </div>
+        {% endif %}
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
