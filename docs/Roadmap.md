@@ -204,9 +204,3 @@ smart_campus/
 22. Export the ERD as a PNG from Workbench: File → Export → Export as PNG.
 
 ---
-
-### Note on Google Antigravity / GitHub Copilot
-
-Regarding your constraint about "Google Antigravity" — this product does not currently exist as a publicly released tool. There is no "Agent Manager" or "Browser agent" under that name. This appears to be either a placeholder in your brief or a tool specific to your institution. If you can clarify what platform this refers to, I can add specific instructions for it.
-
-For **GitHub Copilot** (which is real and useful here): activate it in VS Code, and it will give you autocomplete for the repetitive Flask route patterns, Jinja template loops, and SQL query strings. Use it most in `blueprints/faculty.py` and `blueprints/admin.py` since they follow the same structure as `student.py` — Copilot will predict the pattern after seeing one blueprint.

@@ -24,7 +24,7 @@ def dashboard():
 	total_enrollments = execute_query("SELECT COUNT(*) AS total FROM enrollments WHERE status='active'")
 
 	recent_activity = execute_query(
-		"""SELECT DATE_FORMAT(e.enrolled_at, '%%Y-%%m-%%d') AS date,
+		"""SELECT DATE_FORMAT(e.enrolled_at, '%Y-%m-%d') AS date,
 				  'Enrollment' AS type,
 				  CONCAT(s.first_name, ' ', s.last_name, ' enrolled in ', c.course_code) AS details
 		   FROM enrollments e
@@ -34,6 +34,7 @@ def dashboard():
 		   LIMIT 10"""
 	)
 
+	print(recent_activity)
 	return render_template(
 		'admin/dashboard.html',
 		total_students=total_students[0]['total'] if total_students else 0,
