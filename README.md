@@ -1,6 +1,6 @@
 # 🎓 Smart Campus Hub — Academic Management System
 
-A full-stack **Academic Management System** built with **Flask + MySQL** for managing students, faculty, courses, grades, and attendance. This project demonstrates advanced database concepts including normalization, stored procedures, triggers, views, CHECK constraints, and connection pooling.
+A full-stack **Academic Management System** built with **Flask + MySQL** for managing students, faculty, courses, grades, and attendance. This project demonstrates advanced database concepts including normalization, stored procedures, triggers, views, CHECK constraints, and connection pooling..
 
 ---
 
