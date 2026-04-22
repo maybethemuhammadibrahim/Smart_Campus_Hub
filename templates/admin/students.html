@@ -11,57 +11,59 @@
 </div>
 
 {% if students %}
-  <!-- Search -->
-  <div class="search-bar section-mb">
-    <input type="text" id="rosterSearch" placeholder="Search students by name, email, program...">
-  </div>
+<!-- Search -->
+<div class="search-bar section-mb">
+  <input type="text" id="rosterSearch" placeholder="Search students by name, email, program...">
+</div>
 
-  <div class="table-wrap">
-    <table id="rosterTable">
-      <thead>
-        <tr>
-          <th>Student ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Program</th>
-          <th>Batch</th>
-          <th>CGPA</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in students %}
-        <tr>
-          <td><span class="badge badge-info">#{{ s.student_id }}</span></td>
-          <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
-          <td>{{ s.email }}</td>
-          <td>{{ s.program if s.program else '—' }}</td>
-          <td>{{ s.batch_year if s.batch_year else '—' }}</td>
-          <td style="font-weight:700;">{{ s.cgpa if s.cgpa else '0.00' }}</td>
-          <td>
-            {% if s.is_active %}
-              <span class="badge badge-success">Active</span>
-            {% else %}
-              <span class="badge badge-danger">Inactive</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('admin.edit_student', student_id=s.student_id) }}" class="btn btn-outline btn-sm">✏️ Edit</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="table-wrap">
+  <table id="rosterTable">
+    <thead>
+      <tr>
+        <th>Student ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Program</th>
+        <th>Batch</th>
+        <th>CGPA</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td><span class="badge badge-info">#{{ s.student_id }}</span></td>
+        <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.program if s.program else '—' }}</td>
+        <td>{{ s.batch_year if s.batch_year else '—' }}</td>
+        <td style="font-weight:700;">{{ s.cgpa if s.cgpa else '0.00' }}</td>
+        <td>
+          {% if s.is_active %}
+          <span class="badge badge-success">Active</span>
+          {% else %}
+          <span class="badge badge-danger">Inactive</span>
+          {% endif %}
+        </td>
+        <td>
+          <button class="btn btn-outline btn-sm"
+            onclick="openEditModal('editStudentModal', {{ s.student_id }}, '{{ s.first_name }}', '{{ s.last_name }}', '{{ s.email }}', '{{ s.dob if s.dob else '' }}', '{{ s.program if s.program else '' }}', {{ s.batch_year if s.batch_year else 0 }}, {{ 1 if s.is_active else 0 }})">✏️
+            Edit</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% else %}
-  <div class="card card-static">
-    <div class="empty-state">
-      <div class="empty-state-icon">🎓</div>
-      <h3>No students found</h3>
-      <p>Click "Add New Student" to register your first student.</p>
-    </div>
+<div class="card card-static">
+  <div class="empty-state">
+    <div class="empty-state-icon">🎓</div>
+    <h3>No students found</h3>
+    <p>Click "Add New Student" to register your first student.</p>
   </div>
+</div>
 {% endif %}
 
 <!-- Add Student Modal -->
@@ -86,8 +88,13 @@
           <input type="email" class="form-input" id="s_email" name="email" required>
         </div>
         <div class="form-group">
+          <label class="form-label" for="s_dob">Date of Birth</label>
+          <input type="date" class="form-input" id="s_dob" name="dob">
+        </div>
+        <div class="form-group">
           <label class="form-label" for="s_program">Program</label>
-          <input type="text" class="form-input" id="s_program" name="program" placeholder="e.g. BS Computer Science" required>
+          <input type="text" class="form-input" id="s_program" name="program" placeholder="e.g. BS Computer Science"
+            required>
         </div>
         <div class="form-group">
           <label class="form-label" for="s_batch_year">Batch Year</label>
@@ -109,4 +116,76 @@
     </form>
   </div>
 </div>
+
+<!-- Edit Student Modal -->
+<div class="modal-overlay" id="editStudentModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Edit Student</h3>
+      <button class="modal-close" onclick="closeModal('editStudentModal')">&times;</button>
+    </div>
+    <form method="POST" id="editStudentForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Student ID</label>
+          <input type="text" class="form-input" id="edit_s_student_id" disabled>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_first_name">First Name</label>
+          <input type="text" class="form-input" id="edit_s_first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_last_name">Last Name</label>
+          <input type="text" class="form-input" id="edit_s_last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_email">Email</label>
+          <input type="email" class="form-input" id="edit_s_email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_dob">Date of Birth</label>
+          <input type="date" class="form-input" id="edit_s_dob" name="dob">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_program">Program</label>
+          <input type="text" class="form-input" id="edit_s_program" name="program" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_batch_year">Batch Year</label>
+          <input type="number" class="form-input" id="edit_s_batch_year" name="batch_year" min="2000" max="2099"
+            required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_s_is_active">Status</label>
+          <select class="form-input" id="edit_s_is_active" name="is_active">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('editStudentModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditModal(modalId, studentId, firstName, lastName, email, dob, program, batchYear, isActive) {
+    document.getElementById('edit_s_student_id').value = '#' + studentId;
+    document.getElementById('edit_s_first_name').value = firstName;
+    document.getElementById('edit_s_last_name').value = lastName;
+    document.getElementById('edit_s_email').value = email;
+    document.getElementById('edit_s_dob').value = dob;
+    document.getElementById('edit_s_program').value = program;
+    document.getElementById('edit_s_batch_year').value = batchYear;
+    document.getElementById('edit_s_is_active').value = isActive;
+
+    const form = document.getElementById('editStudentForm');
+    form.action = `/admin/students/${studentId}/update`;
+
+    openModal(modalId);
+  }
+</script>
 {% endblock %}

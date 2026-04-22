@@ -155,13 +155,14 @@ def add_student():
 	first_name = request.form.get('first_name', '').strip()
 	last_name = request.form.get('last_name', '').strip()
 	email = request.form.get('email', '').strip()
+	dob = request.form.get('dob', '').strip()
 	program = request.form.get('program', '').strip()
 	batch_year = request.form.get('batch_year', '').strip()
 	username = request.form.get('username', '').strip()
 	password = request.form.get('password', '')
 
 	if not all([first_name, last_name, email, program, batch_year, username, password]):
-		flash('All student fields are required.', 'danger')
+		flash('All required student fields must be filled.', 'danger')
 		return _redirect_back('admin.students')
 
 	user_id = execute_query(
@@ -171,9 +172,9 @@ def add_student():
 	)
 
 	execute_query(
-		"""INSERT INTO students (user_id, first_name, last_name, email, program, batch_year)
-		   VALUES (%s, %s, %s, %s, %s, %s)""",
-		(user_id, first_name, last_name, email, program, batch_year),
+		"""INSERT INTO students (user_id, first_name, last_name, email, dob, program, batch_year)
+		   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+		(user_id, first_name, last_name, email, dob if dob else None, program, batch_year),
 		fetch=False,
 	)
 
@@ -239,17 +240,104 @@ def create_course():
 	return _redirect_back('admin.courses')
 
 
-@admin_bp.route('/students/<int:student_id>/edit')
+
+
+
+@admin_bp.route('/students/<int:student_id>/update', methods=['POST'])
 @login_required
 @role_required('admin')
-def edit_student(student_id):
-	flash(f'Edit student #{student_id} is not implemented yet.', 'info')
+def update_student(student_id):
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	dob = request.form.get('dob', '').strip()
+	program = request.form.get('program', '').strip()
+	batch_year = request.form.get('batch_year', '').strip()
+	is_active = request.form.get('is_active', '0')
+
+	if not all([first_name, last_name, email, program, batch_year]):
+		flash('All required fields must be filled.', 'danger')
+		return _redirect_back('admin.students')
+
+	# Get user_id for this student
+	student = execute_query(
+		"SELECT user_id FROM students WHERE student_id = %s",
+		(student_id,)
+	)
+
+	if not student:
+		flash('Student not found.', 'danger')
+		return redirect(url_for('admin.students'))
+
+	user_id = student[0]['user_id']
+
+	# Update student info
+	execute_query(
+		"""UPDATE students 
+		   SET first_name = %s, last_name = %s, email = %s, dob = %s, 
+		       program = %s, batch_year = %s
+		   WHERE student_id = %s""",
+		(first_name, last_name, email, dob if dob else None, program, batch_year, student_id),
+		fetch=False,
+	)
+
+	# Update user status
+	execute_query(
+		"UPDATE users SET is_active = %s WHERE user_id = %s",
+		(int(is_active), user_id),
+		fetch=False,
+	)
+
+	flash('Student updated successfully.', 'success')
 	return redirect(url_for('admin.students'))
 
 
-@admin_bp.route('/faculty/<int:faculty_id>/edit')
+
+
+
+@admin_bp.route('/faculty/<int:faculty_id>/update', methods=['POST'])
 @login_required
 @role_required('admin')
-def edit_faculty(faculty_id):
-	flash(f'Edit faculty #{faculty_id} is not implemented yet.', 'info')
+def update_faculty(faculty_id):
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	department = request.form.get('department', '').strip()
+	designation = request.form.get('designation', '').strip()
+	is_active = request.form.get('is_active', '0')
+
+	if not all([first_name, last_name, email, department, designation]):
+		flash('All required fields must be filled.', 'danger')
+		return _redirect_back('admin.faculty_list')
+
+	# Get user_id for this faculty
+	faculty = execute_query(
+		"SELECT user_id FROM faculty WHERE faculty_id = %s",
+		(faculty_id,)
+	)
+
+	if not faculty:
+		flash('Faculty not found.', 'danger')
+		return redirect(url_for('admin.faculty_list'))
+
+	user_id = faculty[0]['user_id']
+
+	# Update faculty info
+	execute_query(
+		"""UPDATE faculty 
+		   SET first_name = %s, last_name = %s, email = %s, 
+		       department = %s, designation = %s
+		   WHERE faculty_id = %s""",
+		(first_name, last_name, email, department, designation, faculty_id),
+		fetch=False,
+	)
+
+	# Update user status
+	execute_query(
+		"UPDATE users SET is_active = %s WHERE user_id = %s",
+		(int(is_active), user_id),
+		fetch=False,
+	)
+
+	flash('Faculty updated successfully.', 'success')
 	return redirect(url_for('admin.faculty_list'))

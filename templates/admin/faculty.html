@@ -11,61 +11,63 @@
 </div>
 
 {% if faculty_list %}
-  <!-- Search -->
-  <div class="search-bar section-mb">
-    <input type="text" id="rosterSearch" placeholder="Search faculty by name, department, email...">
-  </div>
+<!-- Search -->
+<div class="search-bar section-mb">
+  <input type="text" id="rosterSearch" placeholder="Search faculty by name, department, email...">
+</div>
 
-  <div class="table-wrap">
-    <table id="rosterTable">
-      <thead>
-        <tr>
-          <th>Faculty ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Department</th>
-          <th>Designation</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in faculty_list %}
-        <tr>
-          <td><span class="badge badge-purple">#{{ f.faculty_id }}</span></td>
-          <td style="font-weight:600;">{{ f.first_name }} {{ f.last_name }}</td>
-          <td>{{ f.email }}</td>
-          <td>{{ f.department if f.department else '—' }}</td>
-          <td>
-            {% if f.designation %}
-              <span class="badge badge-info">{{ f.designation }}</span>
-            {% else %}
-              —
-            {% endif %}
-          </td>
-          <td>
-            {% if f.is_active %}
-              <span class="badge badge-success">Active</span>
-            {% else %}
-              <span class="badge badge-danger">Inactive</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{{ url_for('admin.edit_faculty', faculty_id=f.faculty_id) }}" class="btn btn-outline btn-sm">✏️ Edit</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="table-wrap">
+  <table id="rosterTable">
+    <thead>
+      <tr>
+        <th>Faculty ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Department</th>
+        <th>Designation</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in faculty_list %}
+      <tr>
+        <td><span class="badge badge-purple">#{{ f.faculty_id }}</span></td>
+        <td style="font-weight:600;">{{ f.first_name }} {{ f.last_name }}</td>
+        <td>{{ f.email }}</td>
+        <td>{{ f.department if f.department else '—' }}</td>
+        <td>
+          {% if f.designation %}
+          <span class="badge badge-info">{{ f.designation }}</span>
+          {% else %}
+          —
+          {% endif %}
+        </td>
+        <td>
+          {% if f.is_active %}
+          <span class="badge badge-success">Active</span>
+          {% else %}
+          <span class="badge badge-danger">Inactive</span>
+          {% endif %}
+        </td>
+        <td>
+          <button class="btn btn-outline btn-sm"
+            onclick="openEditFacultyModal('editFacultyModal', {{ f.faculty_id }}, '{{ f.first_name }}', '{{ f.last_name }}', '{{ f.email }}', '{{ f.department if f.department else '' }}', '{{ f.designation if f.designation else '' }}', {{ 1 if f.is_active else 0 }})">✏️
+            Edit</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% else %}
-  <div class="card card-static">
-    <div class="empty-state">
-      <div class="empty-state-icon">👨‍🏫</div>
-      <h3>No faculty found</h3>
-      <p>Click "Add New Faculty" to register your first faculty member.</p>
-    </div>
+<div class="card card-static">
+  <div class="empty-state">
+    <div class="empty-state-icon">👨‍🏫</div>
+    <h3>No faculty found</h3>
+    <p>Click "Add New Faculty" to register your first faculty member.</p>
   </div>
+</div>
 {% endif %}
 
 <!-- Add Faculty Modal -->
@@ -95,7 +97,8 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="f_designation">Designation</label>
-          <input type="text" class="form-input" id="f_designation" name="designation" placeholder="e.g. Assistant Professor" required>
+          <input type="text" class="form-input" id="f_designation" name="designation"
+            placeholder="e.g. Assistant Professor" required>
         </div>
         <div class="form-group">
           <label class="form-label" for="f_username">Username</label>
@@ -113,4 +116,70 @@
     </form>
   </div>
 </div>
+
+<!-- Edit Faculty Modal -->
+<div class="modal-overlay" id="editFacultyModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Edit Faculty</h3>
+      <button class="modal-close" onclick="closeModal('editFacultyModal')">&times;</button>
+    </div>
+    <form method="POST" id="editFacultyForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Faculty ID</label>
+          <input type="text" class="form-input" id="edit_f_faculty_id" disabled>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_first_name">First Name</label>
+          <input type="text" class="form-input" id="edit_f_first_name" name="first_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_last_name">Last Name</label>
+          <input type="text" class="form-input" id="edit_f_last_name" name="last_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_email">Email</label>
+          <input type="email" class="form-input" id="edit_f_email" name="email" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_department">Department</label>
+          <input type="text" class="form-input" id="edit_f_department" name="department" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_designation">Designation</label>
+          <input type="text" class="form-input" id="edit_f_designation" name="designation" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_f_is_active">Status</label>
+          <select class="form-input" id="edit_f_is_active" name="is_active">
+            <option value="1">Active</option>
+            <option value="0">Inactive</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('editFacultyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditFacultyModal(modalId, facultyId, firstName, lastName, email, department, designation, isActive) {
+    document.getElementById('edit_f_faculty_id').value = '#' + facultyId;
+    document.getElementById('edit_f_first_name').value = firstName;
+    document.getElementById('edit_f_last_name').value = lastName;
+    document.getElementById('edit_f_email').value = email;
+    document.getElementById('edit_f_department').value = department;
+    document.getElementById('edit_f_designation').value = designation;
+    document.getElementById('edit_f_is_active').value = isActive;
+
+    const form = document.getElementById('editFacultyForm');
+    form.action = `/admin/faculty/${facultyId}/update`;
+
+    openModal(modalId);
+  }
+</script>
 {% endblock %}
