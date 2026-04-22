@@ -1,5 +1,5 @@
 import mysql.connector
-from mysql.connector import pooling
+from mysql.connector import pooling, Error as MySQLError
 from config import Config
 
 connection_pool = pooling.MySQLConnectionPool(
@@ -34,6 +34,10 @@ def execute_query(query, params=None, fetch=True, many=False):
             conn.commit()
             result = cursor.lastrowid
         return result
+    except MySQLError as e:
+        if not fetch:
+            conn.rollback()
+        raise e
     finally:
         cursor.close()
         conn.close()
@@ -47,12 +51,9 @@ def call_procedure(proc_name, args=()):
         conn.commit()
         result_args = cursor.stored_results()
         return list(result_args)
+    except MySQLError as e:
+        conn.rollback()
+        raise e
     finally:
         cursor.close()
         conn.close()
-
-# def execute_query(query, params=None, fetch=True, many=False):
-#     return []
-
-# def call_procedure(proc_name, args=()):
-#     return []

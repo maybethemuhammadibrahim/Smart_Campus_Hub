@@ -4,8 +4,9 @@
 -- ============================================================
 
 USE smart_campus;
-
+SET SQL_SAFE_UPDATES = 0;
 -- Optional cleanup for repeatable runs
+DELETE FROM audit_log;
 DELETE FROM attendance;
 DELETE FROM grades;
 DELETE FROM enrollments;
@@ -22,6 +23,7 @@ ALTER TABLE courses AUTO_INCREMENT = 1;
 ALTER TABLE enrollments AUTO_INCREMENT = 1;
 ALTER TABLE attendance AUTO_INCREMENT = 1;
 ALTER TABLE grades AUTO_INCREMENT = 1;
+ALTER TABLE audit_log AUTO_INCREMENT = 1;
 
 -- ============================================================
 -- users (10 rows)
@@ -103,17 +105,19 @@ INSERT INTO attendance (attendance_id, enrollment_id, class_date, status, marked
 
 -- ============================================================
 -- grades (10 rows)
--- One row per enrollment
+-- Fixed: grade letters and points now match the grading scale
+-- A  = 90+  (4.00), A- = 85-89 (3.70), B+ = 80-84 (3.30)
+-- B  = 75-79 (3.00), B- = 70-74 (2.70), C+ = 65-69 (2.30)
+-- C  = 60-64 (2.00), F  = <60  (0.00)
 -- ============================================================
 INSERT INTO grades (grade_id, enrollment_id, marks_obtained, total_marks, letter_grade, grade_points) VALUES
-(1,  1,  86.50, 100.00, 'A',  4.00),
-(2,  2,  79.00, 100.00, 'B+', 3.33),
-(3,  3,  74.00, 100.00, 'B',  3.00),
+(1,  1,  86.50, 100.00, 'A-', 3.70),
+(2,  2,  79.00, 100.00, 'B',  3.00),
+(3,  3,  74.00, 100.00, 'B-', 2.70),
 (4,  4,  91.00, 100.00, 'A',  4.00),
-(5,  5,  83.00, 100.00, 'A-', 3.67),
-(6,  6,  88.50, 100.00, 'A',  4.00),
-(7,  7,  72.00, 100.00, 'B',  3.00),
-(8,  8,  69.00, 100.00, 'C+', 2.33),
+(5,  5,  83.00, 100.00, 'B+', 3.30),
+(6,  6,  88.50, 100.00, 'A-', 3.70),
+(7,  7,  72.00, 100.00, 'B-', 2.70),
+(8,  8,  69.00, 100.00, 'C+', 2.30),
 (9,  9,  94.00, 100.00, 'A',  4.00),
-(10, 10, 81.00, 100.00, 'A-', 3.67);
-
+(10, 10, 81.00, 100.00, 'B+', 3.30);

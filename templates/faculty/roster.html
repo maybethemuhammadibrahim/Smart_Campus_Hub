@@ -3,30 +3,79 @@
 
 {% block content %}
 <div class="flex-between section-mb">
-  <h1 class="page-title" style="margin-bottom:0;">Course Roster — {{ course_name }}</h1>
-  <button class="btn btn-outline btn-print" onclick="window.print()">🖨️ Export / Print</button>
+  <div>
+    <h1 class="page-title" style="margin-bottom:0;">Course Roster</h1>
+    <p class="page-subtitle" style="margin-bottom:0;">{{ course_name }}</p>
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-outline btn-print" onclick="window.print()">🖨️ Print</button>
+  </div>
 </div>
 
+<!-- Course Selector -->
+{% if courses %}
+<div class="card card-static section-mb" style="padding: 14px 20px;">
+  <div class="form-row" style="align-items:center;">
+    <div class="form-group" style="margin-bottom:0; flex:1;">
+      <select class="form-input course-selector" data-base-url="{{ url_for('faculty.roster') }}" id="rosterCourseSelect">
+        {% for c in courses %}
+          <option value="{{ c.course_id }}" {% if selected_course == c.course_id %}selected{% endif %}>
+            {{ c.course_code }} — {{ c.course_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Summary Stats -->
+{% if summary and summary.total %}
+<div class="summary-bar">
+  <div class="summary-item">
+    <div class="summary-item-value" data-count="{{ summary.total }}">0</div>
+    <div class="summary-item-label">Students</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-item-value" data-count="{{ summary.graded }}">0</div>
+    <div class="summary-item-label">Graded</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-item-value" data-count="{{ summary.avg_marks }}">0</div>
+    <div class="summary-item-label">Avg Marks</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-item-value" data-count="{{ summary.avg_attendance }}">0</div>
+    <div class="summary-item-label">Avg Attend. %</div>
+  </div>
+</div>
+{% endif %}
+
 {% if students %}
-  <div class="table-wrap">
+  <!-- Search -->
+  <div class="search-bar">
+    <input type="text" id="rosterSearch" placeholder="Search students by name or email...">
+  </div>
+
+  <div class="table-wrap" id="rosterTable">
     <table>
       <thead>
         <tr>
           <th>#</th>
           <th>Student Name</th>
           <th>Email</th>
-          <th>Enrollment Date</th>
+          <th>Enrolled</th>
           <th>Attendance %</th>
-          <th>Current Grade</th>
+          <th>Grade</th>
         </tr>
       </thead>
       <tbody>
         {% for s in students %}
         <tr>
           <td>{{ loop.index }}</td>
-          <td>{{ s.first_name }} {{ s.last_name }}</td>
+          <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
           <td>{{ s.email if s.email else '—' }}</td>
-          <td>{{ s.enrolled_at if s.enrolled_at else '—' }}</td>
+          <td>{{ s.enrolled_at.strftime('%b %d, %Y') if s.enrolled_at else '—' }}</td>
           <td>
             {% if s.attendance_percentage is not none %}
               <div class="progress-info">
@@ -36,7 +85,7 @@
                 <span class="progress-text">{{ s.attendance_percentage }}%</span>
               </div>
             {% else %}
-              —
+              <span style="color:var(--text-muted);">—</span>
             {% endif %}
           </td>
           <td>
@@ -53,7 +102,7 @@
                 <span class="badge">{{ s.letter_grade }}</span>
               {% endif %}
             {% else %}
-              —
+              <span style="color:var(--text-muted); font-size:12px;">Not graded</span>
             {% endif %}
           </td>
         </tr>

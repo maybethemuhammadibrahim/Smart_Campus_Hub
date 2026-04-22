@@ -2,7 +2,10 @@
 {% block title %}Available Courses{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Available Courses</h1>
+<div class="page-header">
+  <h1 class="page-title">Available Courses</h1>
+  <p class="page-subtitle">Browse and enroll in courses for the current semester</p>
+</div>
 
 {% if courses %}
   <div class="table-wrap">
@@ -20,14 +23,22 @@
       <tbody>
         {% for course in courses %}
         <tr>
-          <td>{{ course.course_code }}</td>
+          <td><span class="badge badge-info">{{ course.course_code }}</span></td>
           <td>{{ course.course_name }}</td>
           <td>{{ course.credit_hours }}</td>
           <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
-          <td>{{ course.seats_left }}</td>
           <td>
-            <form method="POST" action="{{ url_for('student.enroll', course_id=course.course_id) }}" style="display:inline;">
-              <button type="submit" class="btn btn-primary btn-sm">Enroll</button>
+            {% if course.seats_left > 5 %}
+              <span class="badge badge-success">{{ course.seats_left }} left</span>
+            {% elif course.seats_left > 0 %}
+              <span class="badge badge-warning">{{ course.seats_left }} left</span>
+            {% else %}
+              <span class="badge badge-danger">Full</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="POST" action="{{ url_for('student.enroll', course_id=course.course_id) }}" style="display:inline;" data-confirm="Are you sure you want to enroll in {{ course.course_name }}?">
+              <button type="submit" class="btn btn-primary btn-sm">➕ Enroll</button>
             </form>
           </td>
         </tr>

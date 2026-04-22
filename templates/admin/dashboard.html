@@ -2,36 +2,61 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Admin Dashboard</h1>
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>Admin Dashboard</h1>
+  <p>Smart Campus Academic Management — Monitor and manage the entire system</p>
+</div>
 
+<!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-number">{{ total_students if total_students else 0 }}</div>
-    <div class="stat-label">Total Students</div>
+    <div class="stat-card-icon blue">🎓</div>
+    <div class="stat-card-content">
+      <div class="stat-number blue" data-count="{{ total_students if total_students else 0 }}">0</div>
+      <div class="stat-label">Total Students</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ total_faculty if total_faculty else 0 }}</div>
-    <div class="stat-label">Total Faculty</div>
+    <div class="stat-card-icon emerald">👨‍🏫</div>
+    <div class="stat-card-content">
+      <div class="stat-number emerald" data-count="{{ total_faculty if total_faculty else 0 }}">0</div>
+      <div class="stat-label">Total Faculty</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ total_courses if total_courses else 0 }}</div>
-    <div class="stat-label">Total Courses</div>
+    <div class="stat-card-icon amber">📚</div>
+    <div class="stat-card-content">
+      <div class="stat-number amber" data-count="{{ total_courses if total_courses else 0 }}">0</div>
+      <div class="stat-label">Total Courses</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ total_enrollments if total_enrollments else 0 }}</div>
-    <div class="stat-label">Total Enrollments</div>
+    <div class="stat-card-icon purple">📋</div>
+    <div class="stat-card-content">
+      <div class="stat-number purple" data-count="{{ total_enrollments if total_enrollments else 0 }}">0</div>
+      <div class="stat-label">Active Enrollments</div>
+    </div>
   </div>
 </div>
 
-<div class="card card-static section-mb">
-  <div class="card-header">Quick Actions</div>
-  <div class="quick-actions">
-    <button class="btn btn-primary" onclick="openModal('addStudentModal')">➕ Add Student</button>
-    <button class="btn btn-primary" onclick="openModal('addFacultyModal')">➕ Add Faculty</button>
-    <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
-  </div>
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <button class="quick-action-btn" onclick="openModal('addStudentModal')">
+    <span class="qa-icon">➕</span> Add Student
+  </button>
+  <button class="quick-action-btn" onclick="openModal('addFacultyModal')">
+    <span class="qa-icon">➕</span> Add Faculty
+  </button>
+  <button class="quick-action-btn" onclick="openModal('createCourseModal')">
+    <span class="qa-icon">➕</span> Create Course
+  </button>
+  <a href="{{ url_for('admin.reports') }}" class="quick-action-btn">
+    <span class="qa-icon">📈</span> View Reports
+  </a>
 </div>
 
+<!-- Recent Activity -->
 <div class="card card-static">
   <div class="card-header">Recent Activity</div>
   {% if recent_activity %}
@@ -47,8 +72,8 @@
         <tbody>
           {% for activity in recent_activity %}
           <tr>
-            <td>{{ activity.date }}</td>
-            <td>{{ activity.type }}</td>
+            <td><span class="badge badge-info">{{ activity.date }}</span></td>
+            <td><span class="badge badge-purple">{{ activity.type }}</span></td>
             <td>{{ activity.details }}</td>
           </tr>
           {% endfor %}

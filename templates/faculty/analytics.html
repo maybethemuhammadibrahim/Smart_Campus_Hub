@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Course Analytics{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">Course Analytics</h1>
+  <p class="page-subtitle">
+    {% if course_info %}
+      {{ course_info.course_code }} — {{ course_info.course_name }}
+    {% else %}
+      Performance insights for your courses
+    {% endif %}
+  </p>
+</div>
+
+<!-- Course Selector -->
+{% if courses %}
+<div class="card card-static section-mb" style="padding: 14px 20px;">
+  <div class="form-row" style="align-items:center;">
+    <div class="form-group" style="margin-bottom:0; flex:1;">
+      <label class="form-label">Select Course</label>
+      <select class="form-input course-selector" data-base-url="{{ url_for('faculty.analytics') }}">
+        {% for c in courses %}
+          <option value="{{ c.course_id }}" {% if selected_course == c.course_id %}selected{% endif %}>
+            {{ c.course_code }} — {{ c.course_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if stats and stats.total_students %}
+  <!-- Overview Stats -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-card-icon blue">👥</div>
+      <div class="stat-card-content">
+        <div class="stat-number blue" data-count="{{ stats.total_students or 0 }}">0</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon emerald">📊</div>
+      <div class="stat-card-content">
+        <div class="stat-number emerald" data-count="{{ stats.avg_marks or 0 }}">0</div>
+        <div class="stat-label">Average Marks</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon amber">🏆</div>
+      <div class="stat-card-content">
+        <div class="stat-number amber" data-count="{{ stats.highest or 0 }}">0</div>
+        <div class="stat-label">Highest Score</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-icon purple">📋</div>
+      <div class="stat-card-content">
+        <div class="stat-number purple" data-count="{{ stats.avg_attendance or 0 }}">0</div>
+        <div class="stat-label">Avg Attendance %</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Grade Distribution Chart -->
+    <div class="card card-static">
+      <div class="card-header">Grade Distribution</div>
+      {% if grade_dist %}
+        <div class="chart-container">
+          {% set max_count = grade_dist|map(attribute='count')|max %}
+          {% for g in grade_dist %}
+            {% set width = ((g.count / max_count) * 100)|round(0)|int if max_count else 0 %}
+            {% set bar_class = 'grade-a' if g.letter_grade in ['A', 'A-'] else ('grade-b' if g.letter_grade in ['B+', 'B', 'B-'] else ('grade-c' if g.letter_grade in ['C+', 'C'] else 'grade-f')) %}
+            <div class="chart-bar-row">
+              <span class="chart-bar-label">{{ g.letter_grade }}</span>
+              <div class="chart-bar-track">
+                <div class="chart-bar-fill {{ bar_class }}" data-width="{{ width }}" style="width:0%;">
+                  {{ g.count }}
+                </div>
+              </div>
+              <span class="chart-bar-count">{{ g.count }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:24px;">
+          <p>No grades recorded yet</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Top Performers -->
+    <div class="card card-static">
+      <div class="card-header">
+        Top Performers
+        <span class="badge badge-success">Top 5</span>
+      </div>
+      {% if top_students %}
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student</th>
+                <th>Marks</th>
+                <th>Grade</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in top_students %}
+              <tr>
+                <td>
+                  {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                </td>
+                <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
+                <td>{{ s.marks_obtained }}</td>
+                <td>
+                  {% set grade_badge = 'badge-success' if s.letter_grade in ['A', 'A-'] else ('badge-info' if s.letter_grade in ['B+', 'B', 'B-'] else 'badge-warning') %}
+                  <span class="badge {{ grade_badge }}">{{ s.letter_grade }}</span>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:24px;">
+          <p>No grades to display</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- At-Risk Students -->
+  {% if at_risk %}
+  <div class="card card-static section-mb" style="margin-top:20px;">
+    <div class="card-header">
+      ⚠️ At-Risk Students
+      <span class="badge badge-danger">{{ at_risk|length }}</span>
+    </div>
+    {% for s in at_risk %}
+    <div class="risk-card">
+      <div>
+        <div class="risk-name">{{ s.first_name }} {{ s.last_name }}</div>
+        <div class="risk-detail">{{ s.email }}</div>
+      </div>
+      <div class="risk-badges">
+        {% if s.attendance is not none and s.attendance < 75 %}
+          <span class="badge badge-danger">📋 {{ s.attendance }}%</span>
+        {% endif %}
+        {% if s.letter_grade %}
+          {% if s.letter_grade in ['F', 'C', 'C+'] %}
+            <span class="badge badge-warning">{{ s.letter_grade }} ({{ s.marks }})</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+{% else %}
+  <div class="card card-static">
+    <div class="empty-state">
+      <div class="empty-state-icon">📈</div>
+      <h3>No analytics available</h3>
+      <p>Select a course to view performance analytics.</p>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

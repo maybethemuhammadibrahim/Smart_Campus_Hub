@@ -2,26 +2,41 @@
 {% block title %}My Courses{% endblock %}
 
 {% block content %}
-<h1 class="page-title">My Courses</h1>
+<div class="page-header">
+  <h1 class="page-title">My Courses</h1>
+  <p class="page-subtitle">Manage your assigned courses, students, and grades</p>
+</div>
 
 {% if courses %}
   <div class="card-grid">
     {% for course in courses %}
     <div class="card">
       <div class="card-body">
-        <div style="margin-bottom: 4px;">
-          <span class="badge badge-info">{{ course.course_code }}</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <span class="badge badge-info course-card-code">{{ course.course_code }}</span>
+          <span class="badge badge-purple">{{ course.semester if course.semester else '—' }}</span>
         </div>
-        <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin: 8px 0 6px;">{{ course.course_name }}</h3>
-        <div style="font-size: 13px; color: var(--text-muted);">
-          <span>{{ course.credit_hours }} Credit Hours</span>
-          <span style="margin-left: 12px;">👥 {{ course.enrolled_count if course.enrolled_count else 0 }} Students</span>
+        <div class="course-card-name">{{ course.course_name }}</div>
+        <div class="course-card-meta">
+          <span>📖 {{ course.credit_hours }} Credits</span>
+          <span>👥 {{ course.enrolled_count if course.enrolled_count else 0 }} / {{ course.max_capacity if course.max_capacity else '—' }}</span>
         </div>
+        {% if course.max_capacity and course.enrolled_count %}
+          {% set pct = ((course.enrolled_count / course.max_capacity) * 100)|round(0)|int %}
+          <div style="margin-top: 10px;">
+            <div class="progress-info">
+              <div class="progress-bar-wrap" style="max-width:100%;">
+                <div class="progress-bar" data-percentage="{{ pct }}"></div>
+              </div>
+              <span class="progress-text">{{ pct }}% full</span>
+            </div>
+          </div>
+        {% endif %}
       </div>
       <div class="card-footer">
-        <a href="{{ url_for('faculty.roster', course_id=course.course_id) }}" class="btn btn-outline btn-sm">View Roster</a>
-        <a href="{{ url_for('faculty.mark_attendance', course_id=course.course_id) }}" class="btn btn-outline btn-sm">Mark Attendance</a>
-        <a href="{{ url_for('faculty.enter_grades', course_id=course.course_id) }}" class="btn btn-primary btn-sm">Enter Grades</a>
+        <a href="{{ url_for('faculty.roster', course_id=course.course_id) }}" class="btn btn-outline btn-sm">👥 Roster</a>
+        <a href="{{ url_for('faculty.mark_attendance', course_id=course.course_id) }}" class="btn btn-outline btn-sm">✅ Attendance</a>
+        <a href="{{ url_for('faculty.enter_grades', course_id=course.course_id) }}" class="btn btn-primary btn-sm">📝 Grades</a>
       </div>
     </div>
     {% endfor %}

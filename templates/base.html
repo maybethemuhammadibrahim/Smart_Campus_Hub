@@ -7,7 +7,7 @@
   <title>Smart Campus — {% block title %}Dashboard{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -56,8 +56,18 @@
         <a href="{{ url_for('faculty.mark_attendance') }}" class="nav-link {% if request.endpoint == 'faculty.mark_attendance' %}active{% endif %}">
           <span class="nav-icon">✅</span> Mark Attendance
         </a>
+        <a href="{{ url_for('faculty.attendance_history') }}" class="nav-link {% if request.endpoint == 'faculty.attendance_history' %}active{% endif %}">
+          <span class="nav-icon">📅</span> Attendance History
+        </a>
         <a href="{{ url_for('faculty.enter_grades') }}" class="nav-link {% if request.endpoint == 'faculty.enter_grades' %}active{% endif %}">
           <span class="nav-icon">📝</span> Enter Grades
+        </a>
+        <a href="{{ url_for('faculty.analytics') }}" class="nav-link {% if request.endpoint == 'faculty.analytics' %}active{% endif %}">
+          <span class="nav-icon">📈</span> Analytics
+        </a>
+        <div class="nav-section-label">Account</div>
+        <a href="{{ url_for('faculty.profile') }}" class="nav-link {% if request.endpoint == 'faculty.profile' %}active{% endif %}">
+          <span class="nav-icon">👤</span> Profile
         </a>
 
       {% elif session.get('role') == 'admin' %}
@@ -108,6 +118,23 @@
 
     {% block content %}{% endblock %}
   </main>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>⚠️ Confirm Action</h3>
+        <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmModalMessage">Are you sure you want to proceed?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="btn btn-primary" id="confirmModalSubmit">Confirm</button>
+      </div>
+    </div>
+  </div>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>

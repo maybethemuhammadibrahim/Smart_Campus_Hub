@@ -2,9 +2,36 @@
 {% block title %}Enter Grades{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Enter Grades — {{ course_name }}</h1>
+<div class="flex-between section-mb">
+  <div>
+    <h1 class="page-title" style="margin-bottom:0;">
+      Enter Grades
+      <span class="unsaved-dot" id="unsavedDot" title="Unsaved changes"></span>
+    </h1>
+    <p class="page-subtitle" style="margin-bottom:0;">{{ course_name }}</p>
+  </div>
+</div>
 
-<form method="POST" action="{{ url_for('faculty.save_grades') }}">
+<!-- Course Selector -->
+{% if courses %}
+<div class="card card-static section-mb" style="padding: 14px 20px;">
+  <div class="form-row" style="align-items:center;">
+    <div class="form-group" style="margin-bottom:0; flex:1;">
+      <label class="form-label">Select Course</label>
+      <select class="form-input course-selector" data-base-url="{{ url_for('faculty.enter_grades') }}">
+        {% for c in courses %}
+          <option value="{{ c.course_id }}" {% if selected_course == c.course_id %}selected{% endif %}>
+            {{ c.course_code }} — {{ c.course_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('faculty.save_grades') }}" id="gradeForm"
+      data-confirm="Save grades for all students in this course? This will also update student CGPAs.">
   <input type="hidden" name="course_id" value="{{ course_id }}">
 
   {% if students %}
@@ -22,28 +49,19 @@
           {% for s in students %}
           <tr>
             <td>{{ loop.index }}</td>
-            <td>{{ s.first_name }} {{ s.last_name }}</td>
+            <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
             <td>
-              <input type="hidden" name="enrollment_id_{{ loop.index }}" value="{{ s.enrollment_id }}">
-              <input type="number" class="form-input" name="marks_{{ s.enrollment_id }}" min="0" max="100" step="0.01"
+              <input type="number" class="form-input" name="marks_{{ s.enrollment_id }}"
+                     min="0" max="100" step="0.01"
                      value="{{ s.marks if s.marks is not none else '' }}" placeholder="0–100"
-                     style="max-width: 120px;">
+                     style="max-width: 130px;">
             </td>
             <td>
               {% if s.letter_grade %}
-                {% if s.letter_grade in ['A', 'A-'] %}
-                  <span class="badge badge-success">{{ s.letter_grade }}</span>
-                {% elif s.letter_grade in ['B+', 'B', 'B-'] %}
-                  <span class="badge badge-info">{{ s.letter_grade }}</span>
-                {% elif s.letter_grade in ['C+', 'C'] %}
-                  <span class="badge badge-warning">{{ s.letter_grade }}</span>
-                {% elif s.letter_grade == 'F' %}
-                  <span class="badge badge-danger">{{ s.letter_grade }}</span>
-                {% else %}
-                  <span class="badge">{{ s.letter_grade }}</span>
-                {% endif %}
+                {% set grade_cls = 'grade-a' if s.letter_grade in ['A', 'A-'] else ('grade-b' if s.letter_grade in ['B+', 'B', 'B-'] else ('grade-c' if s.letter_grade in ['C+', 'C'] else 'grade-f')) %}
+                <span class="grade-preview {{ grade_cls }}">{{ s.letter_grade }}</span>
               {% else %}
-                <span style="color: var(--text-muted); font-size: 12px;">Not graded</span>
+                <span class="grade-preview">—</span>
               {% endif %}
             </td>
           </tr>
@@ -52,7 +70,24 @@
       </table>
     </div>
 
-    <button type="submit" class="btn btn-primary">Save Grades</button>
+    <!-- Grade Scale Reference -->
+    <div class="card card-static section-mb" style="padding: 16px 20px;">
+      <div class="card-header" style="margin-bottom:10px; padding-bottom:8px;">Grade Scale Reference</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; font-size:12px; font-weight:600;">
+        <span class="badge badge-success">A ≥ 90</span>
+        <span class="badge badge-success">A- ≥ 85</span>
+        <span class="badge badge-info">B+ ≥ 80</span>
+        <span class="badge badge-info">B ≥ 75</span>
+        <span class="badge badge-info">B- ≥ 70</span>
+        <span class="badge badge-warning">C+ ≥ 65</span>
+        <span class="badge badge-warning">C ≥ 60</span>
+        <span class="badge badge-danger">F &lt; 60</span>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+      💾 Save Grades
+    </button>
   {% else %}
     <div class="card card-static">
       <div class="empty-state">

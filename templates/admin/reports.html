@@ -2,11 +2,17 @@
 {% block title %}Reports{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Reports</h1>
+<div class="page-header">
+  <h1 class="page-title">Reports</h1>
+  <p class="page-subtitle">System-wide analytics, enrollment statistics, and academic performance reports</p>
+</div>
 
 <!-- Enrollment Report -->
 <div class="card card-static section-mb">
-  <div class="card-header">Enrollment Report</div>
+  <div class="card-header">
+    Enrollment Report
+    <span class="badge badge-info">📊 Capacity Analysis</span>
+  </div>
   {% if enrollment_report %}
     <div class="table-wrap" style="border:none; box-shadow:none;">
       <table>
@@ -23,10 +29,10 @@
         <tbody>
           {% for row in enrollment_report %}
           <tr>
-            <td>{{ row.course_code }}</td>
-            <td>{{ row.course_name }}</td>
+            <td><span class="badge badge-info">{{ row.course_code }}</span></td>
+            <td style="font-weight:600;">{{ row.course_name }}</td>
             <td>{{ row.faculty_name if row.faculty_name else '—' }}</td>
-            <td>{{ row.enrolled }}</td>
+            <td style="font-weight:700;">{{ row.enrolled }}</td>
             <td>{{ row.capacity }}</td>
             <td>
               <div class="progress-info">
@@ -52,7 +58,10 @@
 
 <!-- GPA Distribution -->
 <div class="card card-static section-mb">
-  <div class="card-header">GPA Distribution</div>
+  <div class="card-header">
+    GPA Distribution
+    <span class="badge badge-purple">📈 Academic Overview</span>
+  </div>
   {% if gpa_dist %}
     <div class="table-wrap" style="border:none; box-shadow:none;">
       <table>
@@ -65,8 +74,20 @@
         <tbody>
           {% for row in gpa_dist %}
           <tr>
-            <td>{{ row.gpa_range }}</td>
-            <td>{{ row.student_count }}</td>
+            <td style="font-weight:600;">
+              {% if 'Dean' in row.gpa_range %}
+                <span class="badge badge-success">{{ row.gpa_range }}</span>
+              {% elif 'Good' in row.gpa_range %}
+                <span class="badge badge-info">{{ row.gpa_range }}</span>
+              {% elif 'Satisfactory' in row.gpa_range %}
+                <span class="badge badge-warning">{{ row.gpa_range }}</span>
+              {% elif 'At Risk' in row.gpa_range %}
+                <span class="badge badge-danger">{{ row.gpa_range }}</span>
+              {% else %}
+                <span class="badge badge-purple">{{ row.gpa_range }}</span>
+              {% endif %}
+            </td>
+            <td style="font-weight:700; font-size:16px;">{{ row.student_count }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -83,7 +104,10 @@
 
 <!-- Faculty Load -->
 <div class="card card-static section-mb">
-  <div class="card-header">Faculty Load</div>
+  <div class="card-header">
+    Faculty Load
+    <span class="badge badge-info">👨‍🏫 Workload</span>
+  </div>
   {% if faculty_load %}
     <div class="table-wrap" style="border:none; box-shadow:none;">
       <table>
@@ -98,10 +122,10 @@
         <tbody>
           {% for row in faculty_load %}
           <tr>
-            <td>{{ row.faculty_name }}</td>
+            <td style="font-weight:600;">{{ row.faculty_name }}</td>
             <td>{{ row.department if row.department else '—' }}</td>
-            <td>{{ row.course_count }}</td>
-            <td>{{ row.total_students }}</td>
+            <td><span class="badge badge-info">{{ row.course_count }}</span></td>
+            <td style="font-weight:700;">{{ row.total_students }}</td>
           </tr>
           {% endfor %}
         </tbody>

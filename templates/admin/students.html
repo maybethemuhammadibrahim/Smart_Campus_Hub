@@ -3,13 +3,21 @@
 
 {% block content %}
 <div class="flex-between section-mb">
-  <h1 class="page-title" style="margin-bottom:0;">Manage Students</h1>
+  <div>
+    <h1 class="page-title" style="margin-bottom:0;">Manage Students</h1>
+    <p class="page-subtitle" style="margin-bottom:0;">View, add, and manage all registered students</p>
+  </div>
   <button class="btn btn-primary" onclick="openModal('addStudentModal')">➕ Add New Student</button>
 </div>
 
 {% if students %}
+  <!-- Search -->
+  <div class="search-bar section-mb">
+    <input type="text" id="rosterSearch" placeholder="Search students by name, email, program...">
+  </div>
+
   <div class="table-wrap">
-    <table>
+    <table id="rosterTable">
       <thead>
         <tr>
           <th>Student ID</th>
@@ -25,12 +33,12 @@
       <tbody>
         {% for s in students %}
         <tr>
-          <td>{{ s.student_id }}</td>
-          <td>{{ s.first_name }} {{ s.last_name }}</td>
+          <td><span class="badge badge-info">#{{ s.student_id }}</span></td>
+          <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
           <td>{{ s.email }}</td>
           <td>{{ s.program if s.program else '—' }}</td>
           <td>{{ s.batch_year if s.batch_year else '—' }}</td>
-          <td>{{ s.cgpa if s.cgpa else '0.00' }}</td>
+          <td style="font-weight:700;">{{ s.cgpa if s.cgpa else '0.00' }}</td>
           <td>
             {% if s.is_active %}
               <span class="badge badge-success">Active</span>
@@ -39,7 +47,7 @@
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('admin.edit_student', student_id=s.student_id) }}" class="btn btn-outline btn-sm">Edit</a>
+            <a href="{{ url_for('admin.edit_student', student_id=s.student_id) }}" class="btn btn-outline btn-sm">✏️ Edit</a>
           </td>
         </tr>
         {% endfor %}

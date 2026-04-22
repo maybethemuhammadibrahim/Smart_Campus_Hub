@@ -18,7 +18,8 @@ CREATE TABLE users (
     password    VARCHAR(255) NOT NULL,         -- bcrypt hash
     role        ENUM('student','faculty','admin') NOT NULL,
     is_active   BOOLEAN DEFAULT TRUE,
-    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_username_len CHECK (LENGTH(username) >= 3)
 );
 
 -- ============================================================
@@ -36,7 +37,9 @@ CREATE TABLE students (
     batch_year    YEAR,
     cgpa          DECIMAL(3,2) DEFAULT 0.00,
     CONSTRAINT fk_student_user FOREIGN KEY (user_id)
-        REFERENCES users(user_id) ON DELETE CASCADE
+        REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT chk_student_email CHECK (email LIKE '%@%'),
+    CONSTRAINT chk_student_cgpa CHECK (cgpa BETWEEN 0.00 AND 4.00)
 );
 
 -- ============================================================
@@ -51,7 +54,8 @@ CREATE TABLE faculty (
     department   VARCHAR(100),
     designation  VARCHAR(100),
     CONSTRAINT fk_faculty_user FOREIGN KEY (user_id)
-        REFERENCES users(user_id) ON DELETE CASCADE
+        REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT chk_faculty_email CHECK (email LIKE '%@%')
 );
 
 -- ============================================================
@@ -67,7 +71,9 @@ CREATE TABLE courses (
     faculty_id   INT,
     max_capacity SMALLINT DEFAULT 40,
     CONSTRAINT fk_course_faculty FOREIGN KEY (faculty_id)
-        REFERENCES faculty(faculty_id) ON DELETE SET NULL
+        REFERENCES faculty(faculty_id) ON DELETE SET NULL,
+    CONSTRAINT chk_credit_hours CHECK (credit_hours BETWEEN 1 AND 3),
+    CONSTRAINT chk_max_capacity CHECK (max_capacity BETWEEN 1 AND 500)
 );
 
 -- ============================================================
@@ -101,7 +107,8 @@ CREATE TABLE attendance (
     marked_by      INT,                          -- faculty user_id
     CONSTRAINT fk_attend_enrollment FOREIGN KEY (enrollment_id)
         REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
-    CONSTRAINT uq_attendance UNIQUE (enrollment_id, class_date)
+    CONSTRAINT uq_attendance UNIQUE (enrollment_id, class_date),
+    CONSTRAINT chk_class_date CHECK (class_date <= CURDATE())
 );
 
 -- ============================================================
@@ -117,5 +124,36 @@ CREATE TABLE grades (
     letter_grade   CHAR(2),
     grade_points   DECIMAL(3,2),
     CONSTRAINT fk_grade_enrollment FOREIGN KEY (enrollment_id)
-        REFERENCES enrollments(enrollment_id) ON DELETE CASCADE
+        REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
+    CONSTRAINT chk_total_marks CHECK (total_marks > 0),
+    CONSTRAINT chk_marks_obtained CHECK (marks_obtained BETWEEN 0 AND total_marks),
+    CONSTRAINT chk_grade_points CHECK (grade_points BETWEEN 0.00 AND 4.00)
 );
+
+-- ============================================================
+-- TABLE 8: audit_log
+-- Tracks modifications to grades and attendance for accountability
+-- Covers: Ch.20 Transaction Processing, data auditing
+-- ============================================================
+CREATE TABLE audit_log (
+    log_id      INT AUTO_INCREMENT PRIMARY KEY,
+    table_name  VARCHAR(50)  NOT NULL,
+    record_id   INT          NOT NULL,
+    action      ENUM('INSERT','UPDATE','DELETE') NOT NULL,
+    old_value   TEXT,
+    new_value   TEXT,
+    changed_by  INT,
+    changed_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- PERFORMANCE INDEXES
+-- Covers: Ch.21 Concurrency & performance optimization
+-- ============================================================
+CREATE INDEX idx_enrollments_student ON enrollments(student_id);
+CREATE INDEX idx_enrollments_course  ON enrollments(course_id);
+CREATE INDEX idx_enrollments_status  ON enrollments(status);
+CREATE INDEX idx_attendance_date     ON attendance(class_date);
+CREATE INDEX idx_grades_enrollment   ON grades(enrollment_id);
+CREATE INDEX idx_courses_faculty     ON courses(faculty_id);
+CREATE INDEX idx_audit_table_record  ON audit_log(table_name, record_id);

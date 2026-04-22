@@ -3,7 +3,10 @@
 
 {% block content %}
 <div class="flex-between section-mb">
-  <h1 class="page-title" style="margin-bottom:0;">Manage Courses</h1>
+  <div>
+    <h1 class="page-title" style="margin-bottom:0;">Manage Courses</h1>
+    <p class="page-subtitle" style="margin-bottom:0;">Create, view, and manage all academic courses</p>
+  </div>
   <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
 </div>
 
@@ -23,16 +26,26 @@
       <tbody>
         {% for c in courses %}
         <tr>
-          <td>{{ c.course_code }}</td>
-          <td>{{ c.course_name }}</td>
+          <td><span class="badge badge-info">{{ c.course_code }}</span></td>
+          <td style="font-weight:600;">{{ c.course_name }}</td>
           <td>{{ c.credit_hours }}</td>
           <td>{{ c.faculty_name if c.faculty_name else '—' }}</td>
           <td>
-            <span>{{ c.enrolled_count if c.enrolled_count else 0 }}</span>
-            <span style="color: var(--text-muted);">/</span>
-            <span>{{ c.max_capacity }}</span>
+            <div class="progress-info">
+              <div class="progress-bar-wrap">
+                {% set fill_pct = ((c.enrolled_count if c.enrolled_count else 0) / c.max_capacity * 100)|round if c.max_capacity else 0 %}
+                <div class="progress-bar" data-percentage="{{ fill_pct }}"></div>
+              </div>
+              <span class="progress-text">{{ c.enrolled_count if c.enrolled_count else 0 }}/{{ c.max_capacity }}</span>
+            </div>
           </td>
-          <td>{{ c.semester if c.semester else '—' }}</td>
+          <td>
+            {% if c.semester %}
+              <span class="badge badge-purple">{{ c.semester }}</span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>

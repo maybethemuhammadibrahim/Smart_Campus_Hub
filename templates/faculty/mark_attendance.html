@@ -2,15 +2,18 @@
 {% block title %}Mark Attendance{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Mark Attendance</h1>
+<div class="page-header">
+  <h1 class="page-title">Mark Attendance</h1>
+  <p class="page-subtitle">Record student attendance for your courses</p>
+</div>
 
-<form method="POST" action="{{ url_for('faculty.submit_attendance') }}">
-  <div class="card card-static section-mb">
-    <div class="card-header">Session Details</div>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end;">
-      <div class="form-group" style="margin-bottom:0; flex:1; min-width:200px;">
+<form method="POST" action="{{ url_for('faculty.submit_attendance') }}" data-confirm="Submit attendance for all listed students?">
+  <div class="card card-static section-mb" style="padding: 18px 24px;">
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0; flex:2;">
         <label class="form-label" for="course_id">Course</label>
-        <select class="form-input" id="course_id" name="course_id" required>
+        <select class="form-input course-selector" id="course_id" name="course_id" required
+                data-base-url="{{ url_for('faculty.mark_attendance') }}">
           <option value="">Select a course</option>
           {% for course in courses %}
             <option value="{{ course.course_id }}" {% if selected_course == course.course_id %}selected{% endif %}>
@@ -19,7 +22,7 @@
           {% endfor %}
         </select>
       </div>
-      <div class="form-group" style="margin-bottom:0; min-width:180px;">
+      <div class="form-group" style="margin-bottom:0;">
         <label class="form-label" for="attendance_date">Date</label>
         <input type="date" class="form-input" id="attendance_date" name="attendance_date" value="{{ today }}" required>
       </div>
@@ -27,6 +30,30 @@
   </div>
 
   {% if students %}
+    <!-- Attendance Summary Counter -->
+    <div class="attendance-summary">
+      <div class="att-counter">
+        <span class="dot green"></span>
+        Present: <strong id="count-present">{{ students|length }}</strong>
+      </div>
+      <div class="att-counter">
+        <span class="dot red"></span>
+        Absent: <strong id="count-absent">0</strong>
+      </div>
+      <div class="att-counter">
+        <span class="dot yellow"></span>
+        Late: <strong id="count-late">0</strong>
+      </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions">
+      <span style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Quick:</span>
+      <button type="button" class="bulk-btn present" data-mark-all="present">✅ All Present</button>
+      <button type="button" class="bulk-btn absent" data-mark-all="absent">❌ All Absent</button>
+      <button type="button" class="bulk-btn late" data-mark-all="late">⏰ All Late</button>
+    </div>
+
     <div class="table-wrap section-mb">
       <table>
         <thead>
@@ -40,17 +67,20 @@
           {% for s in students %}
           <tr>
             <td>{{ loop.index }}</td>
-            <td>{{ s.first_name }} {{ s.last_name }}</td>
+            <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
             <td>
               <div class="radio-group">
-                <label>
-                  <input type="radio" name="status_{{ s.enrollment_id }}" value="present" checked> Present
+                <label class="present-checked">
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="present" checked>
+                  <span>✅ Present</span>
                 </label>
                 <label>
-                  <input type="radio" name="status_{{ s.enrollment_id }}" value="absent"> Absent
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="absent">
+                  <span>❌ Absent</span>
                 </label>
                 <label>
-                  <input type="radio" name="status_{{ s.enrollment_id }}" value="late"> Late
+                  <input type="radio" name="status_{{ s.enrollment_id }}" value="late">
+                  <span>⏰ Late</span>
                 </label>
               </div>
             </td>
@@ -60,7 +90,9 @@
       </table>
     </div>
 
-    <button type="submit" class="btn btn-primary">Submit Attendance</button>
+    <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+      ✅ Submit Attendance
+    </button>
   {% else %}
     <div class="card card-static">
       <div class="empty-state">

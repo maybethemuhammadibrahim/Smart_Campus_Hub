@@ -13,9 +13,14 @@ def dashboard():
     sid = session['entity_id']
     student = execute_query("SELECT * FROM students WHERE student_id=%s", (sid,))
     enrolled = execute_query(
-        "SELECT c.course_name, c.course_code FROM enrollments e "
-        "JOIN courses c ON e.course_id=c.course_id "
-        "WHERE e.student_id=%s AND e.status='active'", (sid,)
+        """SELECT c.course_name, c.course_code, c.credit_hours,
+                  CONCAT(f.first_name, ' ', f.last_name) AS faculty_name
+           FROM enrollments e
+           JOIN courses c ON e.course_id = c.course_id
+           LEFT JOIN faculty f ON c.faculty_id = f.faculty_id
+           WHERE e.student_id = %s AND e.status = 'active'
+           ORDER BY c.course_code""",
+        (sid,),
     )
     return render_template('student/dashboard.html',
                            student=student[0], enrolled=enrolled)

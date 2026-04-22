@@ -1,30 +1,70 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Student Dashboard{% endblock %}
 
 {% block content %}
-<h1 class="page-title">Welcome back, {{ student.first_name }}</h1>
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>Welcome back, {{ student.first_name if student.first_name else 'Student' }}!</h1>
+  <p>{{ student.program if student.program else 'Program' }} — Batch {{ student.batch_year if student.batch_year else '—' }}</p>
+  {% if student.cgpa %}
+    <span class="designation-badge">CGPA: {{ student.cgpa }}</span>
+  {% endif %}
+</div>
 
+<!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-number">{{ enrolled|length }}</div>
-    <div class="stat-label">Enrolled Courses</div>
+    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-content">
+      <div class="stat-number blue" data-count="{{ enrolled|length }}">0</div>
+      <div class="stat-label">Enrolled Courses</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ student.cgpa if student.cgpa else '0.00' }}</div>
-    <div class="stat-label">CGPA</div>
+    <div class="stat-card-icon emerald">🎯</div>
+    <div class="stat-card-content">
+      <div class="stat-number emerald">{{ student.cgpa if student.cgpa else '0.00' }}</div>
+      <div class="stat-label">Current CGPA</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ student.batch_year if student.batch_year else '—' }}</div>
-    <div class="stat-label">Batch Year</div>
+    <div class="stat-card-icon amber">📅</div>
+    <div class="stat-card-content">
+      <div class="stat-number amber">{{ student.batch_year if student.batch_year else '—' }}</div>
+      <div class="stat-label">Batch Year</div>
+    </div>
   </div>
   <div class="stat-card">
-    <div class="stat-number">{{ student.program if student.program else '—' }}</div>
-    <div class="stat-label">Program</div>
+    <div class="stat-card-icon purple">🎓</div>
+    <div class="stat-card-content">
+      <div class="stat-number purple">{{ student.program if student.program else '—' }}</div>
+      <div class="stat-label">Program</div>
+    </div>
   </div>
 </div>
 
+<!-- Quick Actions -->
+<div class="quick-actions">
+  <a href="{{ url_for('student.available_courses') }}" class="quick-action-btn">
+    <span class="qa-icon">📚</span> Browse Courses
+  </a>
+  <a href="{{ url_for('student.attendance') }}" class="quick-action-btn">
+    <span class="qa-icon">📋</span> My Attendance
+  </a>
+  <a href="{{ url_for('student.grades') }}" class="quick-action-btn">
+    <span class="qa-icon">📝</span> My Grades
+  </a>
+  <a href="{{ url_for('student.transcript') }}" class="quick-action-btn">
+    <span class="qa-icon">🎓</span> Transcript
+  </a>
+</div>
+
+<!-- Enrolled Courses Table -->
 <div class="card card-static">
-  <div class="card-header">Enrolled Courses</div>
+  <div class="card-header">
+    Enrolled Courses
+    <span class="badge badge-info">{{ enrolled|length }}</span>
+  </div>
   {% if enrolled %}
     <div class="table-wrap" style="border:none; box-shadow:none;">
       <table>
@@ -40,7 +80,7 @@
         <tbody>
           {% for course in enrolled %}
           <tr>
-            <td>{{ course.course_code }}</td>
+            <td><span class="badge badge-info">{{ course.course_code }}</span></td>
             <td>{{ course.course_name }}</td>
             <td>{{ course.credit_hours if course.credit_hours else '—' }}</td>
             <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
