@@ -6,8 +6,8 @@
 <div class="welcome-banner">
   <h1>Welcome back, {{ student.first_name if student.first_name else 'Student' }}!</h1>
   <p>{{ student.program if student.program else 'Program' }} — Batch {{ student.batch_year if student.batch_year else '—' }}</p>
-  {% if student.cgpa %}
-    <span class="designation-badge">CGPA: {{ student.cgpa }}</span>
+  {% if cgpa %}
+    <span class="designation-badge">CGPA: {{ cgpa }}</span>
   {% endif %}
 </div>
 
@@ -23,7 +23,7 @@
   <div class="stat-card">
     <div class="stat-card-icon emerald">🎯</div>
     <div class="stat-card-content">
-      <div class="stat-number emerald">{{ student.cgpa if student.cgpa else '0.00' }}</div>
+      <div class="stat-number emerald">{{ cgpa if cgpa else '0.00' }}</div>
       <div class="stat-label">Current CGPA</div>
     </div>
   </div>

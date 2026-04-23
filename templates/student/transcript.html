@@ -69,7 +69,7 @@
             {% endif %}
           </td>
           <td style="font-weight:700;">{{ row.grade_points if row.grade_points is not none else '—' }}</td>
-          <td>{{ row.semester if row.semester else '—' }}</td>
+          <td>{{ row.semester_name if row.semester_name else '—' }}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -87,6 +87,6 @@
 
 <div class="cgpa-card">
   <div class="cgpa-label">Cumulative GPA</div>
-  <div class="cgpa-value">{{ student.cgpa if student.cgpa else '0.00' }}</div>
+  <div class="cgpa-value">{{ cgpa if cgpa else '0.00' }}</div>
 </div>
 {% endblock %}

@@ -86,7 +86,7 @@ A full-stack **Academic Management System** built with **Flask + MySQL** for man
 │              MySQL 8.x Database                       │
 │  ┌─────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐  │
 │  │ Tables  │ │  Views   │ │Triggers │ │Stored    │  │
-│  │ (8)     │ │  (4)     │ │ (6)     │ │Procs (3) │  │
+│  │ (10)    │ │  (5)     │ │ (7)     │ │Procs (3) │  │
 │  └─────────┘ └──────────┘ └─────────┘ └──────────┘  │
 └──────────────────────────────────────────────────────┘
 ```
@@ -110,10 +110,10 @@ smart_campus/
 │   └── admin.py              # Admin portal routes
 │
 ├── db/
-│   ├── schema.sql            # 8 tables with CHECK constraints + indexes
+│   ├── schema.sql            # 10 tables with CHECK constraints + indexes
 │   ├── stored_procedures.sql # 3 stored procedures
-│   ├── views.sql             # 4 SQL views
-│   ├── triggers.sql          # 6 triggers (validation + audit)
+│   ├── views.sql             # 5 SQL views
+│   ├── triggers.sql          # 7 triggers (validation + audit)
 │   ├── seed_data.sql         # Sample data (10 users, 8 courses, etc.)
 │   └── queries/
 │       ├── student_queries.sql
@@ -147,26 +147,30 @@ smart_campus/
 ### Entity-Relationship Summary
 
 ```
-users (1) ──── (1) students     [via user_id FK]
-users (1) ──── (1) faculty      [via user_id FK]
-faculty (1) ── (M) courses      [faculty teaches many courses]
-students (M) ─ (M) courses      [resolved via enrollments junction table]
+users (1) ──── (1) students          [via user_id FK]
+users (1) ──── (1) faculty           [via user_id FK]
+courses (1) ── (M) course_sections   [catalog course offered in many sections]
+faculty (1) ── (M) course_sections   [faculty assigned to sections]
+semesters (1) ─ (M) course_sections  [semester contains many sections]
+students (M) ─ (M) course_sections   [resolved via enrollments → section_id]
 enrollments (1) ── (M) attendance
 enrollments (1) ── (1) grades
 ```
 
-### Tables (8 total)
+### Tables (10 total)
 
 | # | Table | Purpose | Key Constraints |
 |---|-------|---------|----------------|
 | 1 | `users` | Authentication & roles | `UNIQUE(username)`, `CHECK(LENGTH(username) >= 3)` |
-| 2 | `students` | Student profiles | `CHECK(cgpa BETWEEN 0 AND 4)`, `CHECK(email LIKE '%@%')` |
+| 2 | `students` | Student profiles | `CHECK(email LIKE '%@%')` — no stored `cgpa` column |
 | 3 | `faculty` | Faculty profiles | `CHECK(email LIKE '%@%')` |
-| 4 | `courses` | Course catalog | `CHECK(credit_hours BETWEEN 1 AND 3)`, `CHECK(max_capacity BETWEEN 1 AND 500)` |
-| 5 | `enrollments` | Student-Course junction | `UNIQUE(student_id, course_id)` |
-| 6 | `attendance` | Daily attendance records | `UNIQUE(enrollment_id, class_date)`, `CHECK(class_date <= CURDATE())` |
-| 7 | `grades` | Academic grades | `CHECK(marks_obtained BETWEEN 0 AND total_marks)`, `CHECK(grade_points BETWEEN 0 AND 4)` |
-| 8 | `audit_log` | Change tracking | Populated by triggers on grades/attendance |
+| 4 | `courses` | Course catalog only | `CHECK(credit_hours BETWEEN 1 AND 3)` — no `faculty_id`, `semester`, `max_capacity` |
+| 5 | `semesters` | Academic semester registry | `UNIQUE(name)`, `CHECK(end_date > start_date)` |
+| 6 | `course_sections` | Course offerings (section per semester) | `UNIQUE(course_id, semester_id, section_code)`; FKs to `courses`, `semesters`, `faculty` |
+| 7 | `enrollments` | Student-Section junction | `UNIQUE(student_id, section_id)` — FK to `section_id` |
+| 8 | `attendance` | Daily attendance records | `UNIQUE(enrollment_id, class_date)`; future-date blocked by trigger |
+| 9 | `grades` | Academic grades | `CHECK(marks_obtained BETWEEN 0 AND total_marks)`, `CHECK(grade_points BETWEEN 0 AND 4)` |
+| 10 | `audit_log` | Change tracking | Populated by triggers on grades/attendance |
 
 ### Normalization
 
@@ -174,7 +178,7 @@ enrollments (1) ── (1) grades
 |-------------|-------------------|
 | **1NF** | All attributes are atomic; no multi-valued attributes |
 | **2NF** | Auth data (users table) separated from entity data (students/faculty) — no partial dependencies |
-| **3NF** | No transitive dependencies — cgpa is computed but stored for performance (documented trade-off) |
+| **3NF** | No transitive dependencies — `cgpa` is fully computed via `v_student_cgpa` view; no derived column stored |
 | **BCNF** | Every determinant is a candidate key in all tables |
 
 ---
@@ -287,7 +291,7 @@ The Faculty Portal is the most feature-rich module with **13 routes** and **8 te
 | POST | `/faculty/attendance/submit` | `submit_attendance()` | Save attendance records |
 | GET | `/faculty/attendance/history/<id>` | `attendance_history()` | Past attendance records |
 | GET | `/faculty/grades/<id>` | `enter_grades()` | Grade entry form |
-| POST | `/faculty/grades/save` | `save_grades()` | Save grades + update CGPAs |
+| POST | `/faculty/grades/save` | `save_grades()` | Save grades (CGPA auto-computed via view; no write-back) |
 | GET | `/faculty/analytics/<id>` | `analytics()` | Course performance analytics |
 | GET | `/faculty/profile` | `profile()` | Faculty profile view |
 | POST | `/faculty/profile/update` | `update_profile()` | Save profile changes |
@@ -321,24 +325,25 @@ The Faculty Portal is the most feature-rich module with **13 routes** and **8 te
 
 ## 🗃 Database Objects Reference
 
-### Views (4)
+### Views (5)
 
 | View | Purpose | Used By |
 |------|---------|---------|
-| `v_student_transcript` | Full academic record with grades | Student grades/transcript |
-| `v_attendance_summary` | Attendance % per enrollment | Student attendance, Faculty roster |
-| `v_course_roster` | Students in each course | Faculty roster |
-| `v_admin_enrollment_report` | Enrollment stats per course | Admin reports |
+| `v_student_transcript` | Full academic record with grades (joins via `course_sections`) | Student grades/transcript |
+| `v_attendance_summary` | Attendance % per enrollment per section | Student attendance, Faculty roster |
+| `v_course_roster` | Students enrolled in each section | Faculty roster |
+| `v_admin_enrollment_report` | Section fill rates (`section_id`, `section_code`, `semester_name`, `max_capacity`) | Admin reports |
+| `v_student_cgpa` | Computed CGPA from completed enrollments + grades + credit hours | Student dashboard/transcript/grades, Admin reports |
 
 ### Stored Procedures (3)
 
 | Procedure | Parameters | Purpose |
 |-----------|-----------|---------|
-| `RegisterStudentInCourse` | IN student_id, course_id; OUT message, success | Enrolls student with capacity check |
+| `RegisterStudentInCourse` | IN student_id, section_id; OUT message, success | Enrolls student in a section with capacity check |
 | `CalculateStudentGPA` | IN student_id; OUT gpa | Computes weighted GPA |
 | `UpdateLetterGrade` | IN enrollment_id | Sets letter grade from marks |
 
-### Triggers (6)
+### Triggers (7)
 
 | Trigger | Event | Purpose |
 |---------|-------|---------|
@@ -347,22 +352,23 @@ The Faculty Portal is the most feature-rich module with **13 routes** and **8 te
 | `trg_grade_after_update` | AFTER UPDATE on grades | Auto-updates letter grade |
 | `trg_grade_audit_update` | AFTER UPDATE on grades | Logs changes to audit_log |
 | `trg_attendance_audit_update` | AFTER UPDATE on attendance | Logs changes to audit_log |
-| `trg_attendance_before_insert` | BEFORE INSERT on attendance | Prevents future dates |
+| `trg_attendance_before_insert` | BEFORE INSERT on attendance | Blocks future-date attendance |
+| `trg_attendance_before_update` | BEFORE UPDATE on attendance | Blocks future-date on edits |
 
-### CHECK Constraints (9)
+### CHECK Constraints (7)
 
 | Table | Constraint | Rule |
 |-------|-----------|------|
 | users | `chk_username_len` | `LENGTH(username) >= 3` |
 | students | `chk_student_email` | `email LIKE '%@%'` |
-| students | `chk_student_cgpa` | `cgpa BETWEEN 0.00 AND 4.00` |
 | faculty | `chk_faculty_email` | `email LIKE '%@%'` |
 | courses | `chk_credit_hours` | `credit_hours BETWEEN 1 AND 3` |
-| courses | `chk_max_capacity` | `max_capacity BETWEEN 1 AND 500` |
+| semesters | `chk_semester_dates` | `end_date > start_date` |
 | grades | `chk_marks_obtained` | `marks_obtained BETWEEN 0 AND total_marks` |
 | grades | `chk_total_marks` | `total_marks > 0` |
 | grades | `chk_grade_points` | `grade_points BETWEEN 0.00 AND 4.00` |
-| attendance | `chk_class_date` | `class_date <= CURDATE()` |
+
+> **Note:** `attendance.class_date <= CURDATE()` is enforced by triggers (INSERT + UPDATE) rather than a CHECK constraint, because `CURDATE()` is non-deterministic and cannot be used in MySQL CHECK constraints.
 
 ---
 
