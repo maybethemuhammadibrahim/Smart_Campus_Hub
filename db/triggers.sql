@@ -84,10 +84,25 @@ BEGIN
 END$$
 
 -- ============================================================
--- TRIGGER 6: Prevent future attendance dates
+-- TRIGGER 6: Prevent future attendance dates on INSERT
+-- Uses SIGNAL (non-deterministic CHECK not permitted in MySQL 8)
 -- ============================================================
 CREATE TRIGGER trg_attendance_before_insert
 BEFORE INSERT ON attendance
+FOR EACH ROW
+BEGIN
+    IF NEW.class_date > CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Cannot mark attendance for a future date';
+    END IF;
+END$$
+
+-- ============================================================
+-- TRIGGER 7: Prevent future attendance dates on UPDATE
+-- Guards against backdating/forward-dating via UPDATE path
+-- ============================================================
+CREATE TRIGGER trg_attendance_before_update
+BEFORE UPDATE ON attendance
 FOR EACH ROW
 BEGIN
     IF NEW.class_date > CURDATE() THEN

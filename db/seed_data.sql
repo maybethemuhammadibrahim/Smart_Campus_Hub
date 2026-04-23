@@ -5,25 +5,33 @@
 
 USE smart_campus;
 SET SQL_SAFE_UPDATES = 0;
--- Optional cleanup for repeatable runs
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Optional cleanup for repeatable runs (FK-safe order)
 DELETE FROM audit_log;
 DELETE FROM attendance;
 DELETE FROM grades;
 DELETE FROM enrollments;
+DELETE FROM course_sections;
+DELETE FROM semesters;
 DELETE FROM courses;
 DELETE FROM faculty;
 DELETE FROM students;
 DELETE FROM users;
 
 -- Reset auto-increment counters
-ALTER TABLE users AUTO_INCREMENT = 1;
-ALTER TABLE students AUTO_INCREMENT = 1;
-ALTER TABLE faculty AUTO_INCREMENT = 1;
-ALTER TABLE courses AUTO_INCREMENT = 1;
-ALTER TABLE enrollments AUTO_INCREMENT = 1;
-ALTER TABLE attendance AUTO_INCREMENT = 1;
-ALTER TABLE grades AUTO_INCREMENT = 1;
-ALTER TABLE audit_log AUTO_INCREMENT = 1;
+ALTER TABLE users           AUTO_INCREMENT = 1;
+ALTER TABLE students        AUTO_INCREMENT = 1;
+ALTER TABLE faculty         AUTO_INCREMENT = 1;
+ALTER TABLE courses         AUTO_INCREMENT = 1;
+ALTER TABLE semesters       AUTO_INCREMENT = 1;
+ALTER TABLE course_sections AUTO_INCREMENT = 1;
+ALTER TABLE enrollments     AUTO_INCREMENT = 1;
+ALTER TABLE attendance      AUTO_INCREMENT = 1;
+ALTER TABLE grades          AUTO_INCREMENT = 1;
+ALTER TABLE audit_log       AUTO_INCREMENT = 1;
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- users (10 rows)
@@ -42,40 +50,63 @@ INSERT INTO users (user_id, username, password, role, is_active) VALUES
 (10, 's_maryam',       '$2b$12$rT4yU8iO2pA6sD0fG5hJ9kL3zX7cV1bN4mQ8wE2rT6yU0iO5pA9s', 'student', TRUE);
 
 -- ============================================================
--- students (4 rows)
+-- students (4 rows) — cgpa column removed (computed via view)
 -- ============================================================
-INSERT INTO students (student_id, user_id, first_name, last_name, email, dob, program, batch_year, cgpa) VALUES
-(1, 7,  'Hassan', 'Raza',   'hassan.raza@student.smartcampus.edu',  '2004-03-14', 'BS Computer Science',        2022, 3.42),
-(2, 8,  'Fatima', 'Noor',   'fatima.noor@student.smartcampus.edu',  '2003-11-22', 'BS Information Technology',   2021, 3.76),
-(3, 9,  'Usman',  'Iqbal',  'usman.iqbal@student.smartcampus.edu',  '2004-07-09', 'BBA',                         2022, 3.18),
-(4, 10, 'Maryam', 'Saleem', 'maryam.saleem@student.smartcampus.edu', '2005-01-30', 'BS Software Engineering',     2023, 3.91);
+INSERT INTO students (student_id, user_id, first_name, last_name, email, dob, program, batch_year) VALUES
+(1, 7,  'Hassan', 'Raza',   'hassan.raza@student.smartcampus.edu',   '2004-03-14', 'BS Computer Science',      2022),
+(2, 8,  'Fatima', 'Noor',   'fatima.noor@student.smartcampus.edu',   '2003-11-22', 'BS Information Technology', 2021),
+(3, 9,  'Usman',  'Iqbal',  'usman.iqbal@student.smartcampus.edu',   '2004-07-09', 'BBA',                       2022),
+(4, 10, 'Maryam', 'Saleem', 'maryam.saleem@student.smartcampus.edu', '2005-01-30', 'BS Software Engineering',   2023);
 
 -- ============================================================
 -- faculty (4 rows)
 -- ============================================================
 INSERT INTO faculty (faculty_id, user_id, first_name, last_name, email, department, designation) VALUES
-(1, 3, 'Adeel',   'Khan',    'adeel.khan@smartcampus.edu',   'Computer Science',    'Assistant Professor'),
-(2, 4, 'Hina',    'Mehmood', 'hina.mehmood@smartcampus.edu', 'Information Systems', 'Lecturer'),
-(3, 5, 'Bilal',   'Rizvi',   'bilal.rizvi@smartcampus.edu',  'Business School',     'Associate Professor'),
-(4, 6, 'Samina',  'Nadeem',  'samina.nadeem@smartcampus.edu','Software Engineering','Assistant Professor');
+(1, 3, 'Adeel',  'Khan',    'adeel.khan@smartcampus.edu',    'Computer Science',    'Assistant Professor'),
+(2, 4, 'Hina',   'Mehmood', 'hina.mehmood@smartcampus.edu',  'Information Systems', 'Lecturer'),
+(3, 5, 'Bilal',  'Rizvi',   'bilal.rizvi@smartcampus.edu',   'Business School',     'Associate Professor'),
+(4, 6, 'Samina', 'Nadeem',  'samina.nadeem@smartcampus.edu', 'Software Engineering','Assistant Professor');
 
 -- ============================================================
--- courses (8 rows)
+-- courses (8 rows) — catalog only: course_code, course_name, credit_hours
+-- semester / faculty_id / max_capacity moved to course_sections
 -- ============================================================
-INSERT INTO courses (course_id, course_code, course_name, credit_hours, semester, faculty_id, max_capacity) VALUES
-(1, 'CS101',   'Introduction to Programming',      3, 'Fall 2026',   1, 50),
-(2, 'CS205',   'Database Systems',                 3, 'Fall 2026',   1, 45),
-(3, 'IT220',   'Web Application Development',      3, 'Fall 2026',   2, 40),
-(4, 'IS310',   'Management Information Systems',   3, 'Fall 2026',   2, 35),
-(5, 'BBA201',  'Principles of Marketing',          3, 'Fall 2026',   3, 60),
-(6, 'BBA305',  'Business Analytics',               3, 'Fall 2026',   3, 40),
-(7, 'SE240',   'Software Design and Architecture', 3, 'Fall 2026',   4, 40),
-(8, 'SE315',   'Software Quality Assurance',       3, 'Fall 2026',   4, 35);
+INSERT INTO courses (course_id, course_code, course_name, credit_hours) VALUES
+(1, 'CS101',  'Introduction to Programming',      3),
+(2, 'CS205',  'Database Systems',                 3),
+(3, 'IT220',  'Web Application Development',      3),
+(4, 'IS310',  'Management Information Systems',   3),
+(5, 'BBA201', 'Principles of Marketing',          3),
+(6, 'BBA305', 'Business Analytics',               3),
+(7, 'SE240',  'Software Design and Architecture', 3),
+(8, 'SE315',  'Software Quality Assurance',       3);
 
 -- ============================================================
--- enrollments (10 rows)
+-- semesters (1 row)
 -- ============================================================
-INSERT INTO enrollments (enrollment_id, student_id, course_id, enrolled_at, status) VALUES
+INSERT INTO semesters (semester_id, name, start_date, end_date, is_active) VALUES
+(1, 'Fall 2026', '2026-08-01', '2026-12-31', TRUE);
+
+-- ============================================================
+-- course_sections (8 rows)
+-- One section per course, all in Fall 2026
+-- section_code mirrors old course_code for continuity
+-- ============================================================
+INSERT INTO course_sections (section_id, course_id, semester_id, faculty_id, section_code, max_capacity) VALUES
+(1, 1, 1, 1, 'A', 50),
+(2, 2, 1, 1, 'A', 45),
+(3, 3, 1, 2, 'A', 40),
+(4, 4, 1, 2, 'A', 35),
+(5, 5, 1, 3, 'A', 60),
+(6, 6, 1, 3, 'A', 40),
+(7, 7, 1, 4, 'A', 40),
+(8, 8, 1, 4, 'A', 35);
+
+-- ============================================================
+-- enrollments (10 rows) — now reference section_id, not course_id
+-- section_id == old course_id (1:1 mapping above)
+-- ============================================================
+INSERT INTO enrollments (enrollment_id, student_id, section_id, enrolled_at, status) VALUES
 (1,  1, 1, '2026-08-20 09:10:00', 'active'),
 (2,  1, 2, '2026-08-20 09:12:00', 'active'),
 (3,  1, 3, '2026-08-20 09:14:00', 'active'),
@@ -89,19 +120,20 @@ INSERT INTO enrollments (enrollment_id, student_id, course_id, enrolled_at, stat
 
 -- ============================================================
 -- attendance (10 rows)
--- marked_by stores faculty user_id
+-- marked_by stores faculty user_id — FK now enforced to users
+-- dates are in the past (trigger blocks future dates)
 -- ============================================================
 INSERT INTO attendance (attendance_id, enrollment_id, class_date, status, marked_by) VALUES
-(1,  1,  '2026-09-01', 'present', 3),
-(2,  2,  '2026-09-01', 'present', 3),
-(3,  3,  '2026-09-01', 'late',    4),
-(4,  4,  '2026-09-02', 'present', 3),
-(5,  5,  '2026-09-02', 'absent',  4),
-(6,  6,  '2026-09-02', 'present', 6),
-(7,  7,  '2026-09-03', 'present', 5),
-(8,  8,  '2026-09-03', 'present', 5),
-(9,  9,  '2026-09-04', 'late',    3),
-(10, 10, '2026-09-04', 'present', 6);
+(1,  1,  '2026-03-01', 'present', 3),
+(2,  2,  '2026-03-01', 'present', 3),
+(3,  3,  '2026-03-01', 'late',    4),
+(4,  4,  '2026-03-02', 'present', 3),
+(5,  5,  '2026-03-02', 'absent',  4),
+(6,  6,  '2026-03-02', 'present', 6),
+(7,  7,  '2026-03-03', 'present', 5),
+(8,  8,  '2026-03-03', 'present', 5),
+(9,  9,  '2026-03-04', 'late',    3),
+(10, 10, '2026-03-04', 'present', 6);
 
 -- ============================================================
 -- grades (10 rows)

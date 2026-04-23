@@ -14,7 +14,7 @@
       <div class="card-body">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
           <span class="badge badge-info course-card-code">{{ course.course_code }}</span>
-          <span class="badge badge-purple">{{ course.semester if course.semester else '—' }}</span>
+          <span class="badge badge-purple">{{ course.semester_name if course.semester_name else '—' }}</span>
         </div>
         <div class="course-card-name">{{ course.course_name }}</div>
         <div class="course-card-meta">

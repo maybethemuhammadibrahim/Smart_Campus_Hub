@@ -5,7 +5,7 @@
 <div class="flex-between section-mb">
   <div>
     <h1 class="page-title" style="margin-bottom:0;">Manage Courses</h1>
-    <p class="page-subtitle" style="margin-bottom:0;">Create, view, and manage all academic courses</p>
+    <p class="page-subtitle" style="margin-bottom:0;">Create, view, and manage all academic course sections</p>
   </div>
   <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
 </div>
@@ -18,9 +18,10 @@
           <th>Course Code</th>
           <th>Course Name</th>
           <th>Credit Hours</th>
+          <th>Section</th>
+          <th>Semester</th>
           <th>Faculty Assigned</th>
           <th>Enrolled / Capacity</th>
-          <th>Semester</th>
         </tr>
       </thead>
       <tbody>
@@ -29,6 +30,14 @@
           <td><span class="badge badge-info">{{ c.course_code }}</span></td>
           <td style="font-weight:600;">{{ c.course_name }}</td>
           <td>{{ c.credit_hours }}</td>
+          <td><span class="badge badge-purple">{{ c.section_code }}</span></td>
+          <td>
+            {% if c.semester_name %}
+              <span class="badge badge-purple">{{ c.semester_name }}</span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
           <td>{{ c.faculty_name if c.faculty_name else '—' }}</td>
           <td>
             <div class="progress-info">
@@ -38,13 +47,6 @@
               </div>
               <span class="progress-text">{{ c.enrolled_count if c.enrolled_count else 0 }}/{{ c.max_capacity }}</span>
             </div>
-          </td>
-          <td>
-            {% if c.semester %}
-              <span class="badge badge-purple">{{ c.semester }}</span>
-            {% else %}
-              —
-            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -80,11 +82,15 @@
         </div>
         <div class="form-group">
           <label class="form-label" for="c_credit_hours">Credit Hours</label>
-          <input type="number" class="form-input" id="c_credit_hours" name="credit_hours" min="1" max="6" required>
+          <input type="number" class="form-input" id="c_credit_hours" name="credit_hours" min="1" max="3" required>
         </div>
         <div class="form-group">
           <label class="form-label" for="c_semester">Semester</label>
           <input type="text" class="form-input" id="c_semester" name="semester" placeholder="e.g. Fall 2026" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="c_section_code">Section Code</label>
+          <input type="text" class="form-input" id="c_section_code" name="section_code" placeholder="e.g. A" value="A" required>
         </div>
         <div class="form-group">
           <label class="form-label" for="c_max_capacity">Max Capacity</label>
