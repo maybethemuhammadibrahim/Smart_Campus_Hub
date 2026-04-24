@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block title %}{{ semester.name }} — Analytics{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>📊 {{ semester.name }} Analytics</h1>
+  <p>{{ semester.start_date.strftime('%B %d, %Y') if semester.start_date else '' }} — {{ semester.end_date.strftime('%B %d, %Y') if semester.end_date else '' }}</p>
+  {% if semester.is_active %}
+    <span class="designation-badge">🟢 Active Semester</span>
+  {% else %}
+    <span class="designation-badge">⏸️ Inactive</span>
+  {% endif %}
+</div>
+
+<!-- Back Link -->
+<div class="section-mb">
+  <a href="{{ url_for('admin.semesters') }}" class="btn btn-outline btn-sm">← Back to Semesters</a>
+</div>
+
+<!-- Overview Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-content">
+      <div class="stat-number blue" data-count="{{ stats.total_sections }}">0</div>
+      <div class="stat-label">Total Sections</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon emerald">📋</div>
+    <div class="stat-card-content">
+      <div class="stat-number emerald" data-count="{{ stats.total_enrollments }}">0</div>
+      <div class="stat-label">Active Enrollments</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon amber">📖</div>
+    <div class="stat-card-content">
+      <div class="stat-number amber" data-count="{{ stats.unique_courses }}">0</div>
+      <div class="stat-label">Unique Courses</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon purple">👨‍🏫</div>
+    <div class="stat-card-content">
+      <div class="stat-number purple" data-count="{{ stats.faculty_assigned }}">0</div>
+      <div class="stat-label">Faculty Assigned</div>
+    </div>
+  </div>
+</div>
+
+<!-- Enrollment Status Breakdown -->
+{% if enrollment_status %}
+<div class="card card-static section-mb">
+  <div class="card-header">Enrollment Status Breakdown</div>
+  {% set total_enrollments_all = enrollment_status | sum(attribute='cnt') %}
+  <div class="enrollment-status-bar-wrap">
+    {% for es in enrollment_status %}
+    <div class="enrollment-status-segment
+      {% if es.status == 'active' %}es-active{% elif es.status == 'completed' %}es-completed{% else %}es-dropped{% endif %}"
+      style="width: {{ (es.cnt / total_enrollments_all * 100) | round(1) if total_enrollments_all > 0 else 0 }}%">
+      {{ es.cnt }}
+    </div>
+    {% endfor %}
+  </div>
+  <div class="enrollment-status-legend">
+    {% for es in enrollment_status %}
+    <div class="es-legend-item">
+      <span class="es-dot {% if es.status == 'active' %}es-dot-active{% elif es.status == 'completed' %}es-dot-completed{% else %}es-dot-dropped{% endif %}"></span>
+      <span>{{ es.status | capitalize }} — {{ es.cnt }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Two-Column Layout: Grade Distribution + Faculty Load -->
+<div class="two-col section-mb">
+  <!-- Grade Distribution -->
+  <div class="card card-static">
+    <div class="card-header">Grade Distribution</div>
+    {% if grade_dist %}
+    <div class="chart-container">
+      {% set max_count = grade_dist | map(attribute='student_count') | max %}
+      {% for g in grade_dist %}
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">{{ g.grade_range }}</div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill
+            {% if 'A' in g.grade_range %}grade-a{% elif 'B+' in g.grade_range or 'B' == g.grade_range %}grade-b{% elif 'C' in g.grade_range or 'B-' in g.grade_range %}grade-c{% else %}grade-f{% endif %}"
+            data-width="{{ (g.student_count / max_count * 100) | round(0) if max_count > 0 else 0 }}"
+            style="width: 0%;">
+            {{ g.student_count }}
+          </div>
+        </div>
+        <div class="chart-bar-count">avg {{ g.avg_marks }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📝</div>
+      <h3>No grades recorded</h3>
+      <p>Grade data will appear once grades are entered for this semester.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Faculty Workload -->
+  <div class="card card-static">
+    <div class="card-header">Faculty Workload</div>
+    {% if faculty_load %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Faculty</th>
+            <th>Department</th>
+            <th>Sections</th>
+            <th>Students</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in faculty_load %}
+          <tr>
+            <td style="font-weight:600;">{{ f.faculty_name }}</td>
+            <td><span class="badge badge-purple">{{ f.department }}</span></td>
+            <td style="font-weight:700;">{{ f.section_count }}</td>
+            <td style="font-weight:700;">{{ f.total_students }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">👨‍🏫</div>
+      <h3>No faculty assigned</h3>
+      <p>Faculty workload data will appear once sections are assigned.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Course Sections Table -->
+<div class="card card-static section-mb">
+  <div class="card-header">Course Sections — Fill Rate</div>
+  {% if sections %}
+  <div class="table-wrap" style="border:none; box-shadow:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Section</th>
+          <th>Faculty</th>
+          <th>Enrolled</th>
+          <th>Capacity</th>
+          <th>Fill Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sec in sections %}
+        <tr>
+          <td>
+            <span style="font-weight:700;">{{ sec.course_code }}</span>
+            <span style="color: var(--text-muted); font-size: 12px; display:block;">{{ sec.course_name }}</span>
+          </td>
+          <td><span class="badge badge-info">{{ sec.section_code }}</span></td>
+          <td>{{ sec.faculty_name if sec.faculty_name else '—' }}</td>
+          <td style="font-weight:700;">{{ sec.enrolled_count }}</td>
+          <td>{{ sec.max_capacity }}</td>
+          <td>
+            <div class="progress-info">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar" data-percentage="{{ sec.fill_percentage }}"></div>
+              </div>
+              <span class="progress-text">{{ sec.fill_percentage }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📚</div>
+    <h3>No course sections</h3>
+    <p>No sections have been created for this semester yet.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Two-Column: Attendance Overview + Top Students -->
+<div class="two-col section-mb">
+  <!-- Attendance Overview -->
+  <div class="card card-static">
+    <div class="card-header">Attendance Overview</div>
+    {% if attendance_overview %}
+    <div class="table-wrap" style="border:none; box-shadow:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Section</th>
+            <th>Records</th>
+            <th>Attendance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for att in attendance_overview %}
+          <tr>
+            <td>
+              <span style="font-weight:700;">{{ att.course_code }}</span>
+              <span style="color: var(--text-muted); font-size: 12px; display:block;">{{ att.course_name }}</span>
+            </td>
+            <td><span class="badge badge-info">{{ att.section_code }}</span></td>
+            <td>{{ att.total_records }}</td>
+            <td>
+              <div class="progress-info">
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar" data-percentage="{{ att.attendance_pct }}"></div>
+                </div>
+                <span class="progress-text">{{ att.attendance_pct }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <h3>No attendance data</h3>
+      <p>Attendance records will appear once they are marked.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Top Performing Students -->
+  <div class="card card-static">
+    <div class="card-header">🏆 Top Performing Students</div>
+    {% if top_students %}
+    <div class="top-students-list">
+      {% for idx in range(top_students | length) %}
+      {% set ts = top_students[idx] %}
+      <div class="top-student-card">
+        <div class="top-student-rank">
+          {% if idx == 0 %}🥇{% elif idx == 1 %}🥈{% elif idx == 2 %}🥉{% else %}#{{ idx + 1 }}{% endif %}
+        </div>
+        <div class="top-student-info">
+          <div class="top-student-name">{{ ts.student_name }}</div>
+          <div class="top-student-meta">{{ ts.program }} · {{ ts.courses_taken }} course{{ 's' if ts.courses_taken != 1 else '' }}</div>
+        </div>
+        <div class="top-student-gpa">
+          <span class="top-student-gpa-value">{{ ts.semester_gpa }}</span>
+          <span class="top-student-gpa-label">GPA</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">🏆</div>
+      <h3>No grade data</h3>
+      <p>Top students will appear once grades are entered for this semester.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

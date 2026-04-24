@@ -2,10 +2,16 @@
 {% block title %}Manage Students{% endblock %}
 
 {% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>🎓 Student Management</h1>
+  <p>View, add, and manage all registered students</p>
+</div>
+
+<!-- Actions Bar -->
 <div class="flex-between section-mb">
   <div>
-    <h1 class="page-title" style="margin-bottom:0;">Manage Students</h1>
-    <p class="page-subtitle" style="margin-bottom:0;">View, add, and manage all registered students</p>
+    <h2 class="page-title" style="margin-bottom:0; font-size:20px;">All Students</h2>
   </div>
   <button class="btn btn-primary" onclick="openModal('addStudentModal')">➕ Add New Student</button>
 </div>

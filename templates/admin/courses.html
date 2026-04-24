@@ -2,10 +2,16 @@
 {% block title %}Manage Courses{% endblock %}
 
 {% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>📚 Course Management</h1>
+  <p>Create, assign faculty, and manage all academic courses</p>
+</div>
+
+<!-- Actions Bar -->
 <div class="flex-between section-mb">
   <div>
-    <h1 class="page-title" style="margin-bottom:0;">Manage Courses</h1>
-    <p class="page-subtitle" style="margin-bottom:0;">Create, view, and manage all academic course sections</p>
+    <h2 class="page-title" style="margin-bottom:0; font-size:20px;">All Courses</h2>
   </div>
   <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
 </div>
@@ -18,10 +24,10 @@
           <th>Course Code</th>
           <th>Course Name</th>
           <th>Credit Hours</th>
-          <th>Section</th>
           <th>Semester</th>
-          <th>Faculty Assigned</th>
+          <th>Faculty</th>
           <th>Enrolled / Capacity</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -30,7 +36,6 @@
           <td><span class="badge badge-info">{{ c.course_code }}</span></td>
           <td style="font-weight:600;">{{ c.course_name }}</td>
           <td>{{ c.credit_hours }}</td>
-          <td><span class="badge badge-purple">{{ c.section_code }}</span></td>
           <td>
             {% if c.semester_name %}
               <span class="badge badge-purple">{{ c.semester_name }}</span>
@@ -38,14 +43,34 @@
               —
             {% endif %}
           </td>
-          <td>{{ c.faculty_name if c.faculty_name else '—' }}</td>
+          <td>
+            {% if c.faculty_names %}
+              {% for name in c.faculty_names.split(', ') %}
+                <span class="badge badge-success" style="margin:2px 2px;">{{ name }}</span>
+              {% endfor %}
+            {% else %}
+              <span class="badge badge-warning">Unassigned</span>
+            {% endif %}
+          </td>
           <td>
             <div class="progress-info">
               <div class="progress-bar-wrap">
-                {% set fill_pct = ((c.enrolled_count if c.enrolled_count else 0) / c.max_capacity * 100)|round if c.max_capacity else 0 %}
+                {% set fill_pct = ((c.enrolled_count|int) / (c.total_capacity|int) * 100)|round if c.total_capacity else 0 %}
                 <div class="progress-bar" data-percentage="{{ fill_pct }}"></div>
               </div>
-              <span class="progress-text">{{ c.enrolled_count if c.enrolled_count else 0 }}/{{ c.max_capacity }}</span>
+              <span class="progress-text">{{ c.enrolled_count|int }}/{{ c.total_capacity|int }}</span>
+            </div>
+          </td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm"
+                      onclick="openAssignModal({{ c.course_id }}, '{{ c.course_code }}', '{{ c.course_name }}', {{ c.semester_id }}, '{{ c.semester_name }}')">
+                👨‍🏫 Assign
+              </button>
+              <button class="btn btn-outline btn-sm"
+                      onclick="openEditModal({{ c.course_id }}, '{{ c.course_code }}', '{{ c.course_name }}', {{ c.credit_hours }}, {{ c.semester_id }}, '{{ c.semester_name }}')">
+                ✏️ Edit
+              </button>
             </div>
           </td>
         </tr>
@@ -63,7 +88,7 @@
   </div>
 {% endif %}
 
-<!-- Create Course Modal -->
+<!-- ═══════════ Create Course Modal ═══════════ -->
 <div class="modal-overlay" id="createCourseModal">
   <div class="modal-container">
     <div class="modal-header">
@@ -80,21 +105,33 @@
           <label class="form-label" for="c_course_name">Course Name</label>
           <input type="text" class="form-input" id="c_course_name" name="course_name" required>
         </div>
-        <div class="form-group">
-          <label class="form-label" for="c_credit_hours">Credit Hours</label>
-          <input type="number" class="form-input" id="c_credit_hours" name="credit_hours" min="1" max="3" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="c_credit_hours">Credit Hours</label>
+            <input type="number" class="form-input" id="c_credit_hours" name="credit_hours" min="1" max="3" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="c_max_capacity">Max Capacity</label>
+            <input type="number" class="form-input" id="c_max_capacity" name="max_capacity" min="1" value="40" required>
+          </div>
         </div>
         <div class="form-group">
-          <label class="form-label" for="c_semester">Semester</label>
-          <input type="text" class="form-input" id="c_semester" name="semester" placeholder="e.g. Fall 2026" required>
+          <label class="form-label" for="c_semester_id">Semester</label>
+          <select class="form-input" id="c_semester_id" name="semester_id" required>
+            <option value="">— Select Semester —</option>
+            {% for s in semesters %}
+              <option value="{{ s.semester_id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="c_section_code">Section Code</label>
-          <input type="text" class="form-input" id="c_section_code" name="section_code" placeholder="e.g. A" value="A" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="c_max_capacity">Max Capacity</label>
-          <input type="number" class="form-input" id="c_max_capacity" name="max_capacity" min="1" required>
+          <label class="form-label" for="c_faculty_id">Faculty (Optional)</label>
+          <select class="form-input" id="c_faculty_id" name="faculty_id">
+            <option value="">— No Faculty —</option>
+            {% for f in faculty_list %}
+              <option value="{{ f.faculty_id }}">{{ f.full_name }} ({{ f.department }})</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
       <div class="modal-footer">
@@ -104,4 +141,151 @@
     </form>
   </div>
 </div>
+
+<!-- ═══════════ Assign Faculty Modal ═══════════ -->
+<div class="modal-overlay" id="assignFacultyModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>👨‍🏫 Assign Faculty</h3>
+      <button class="modal-close" onclick="closeModal('assignFacultyModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.assign_faculty') }}">
+      <input type="hidden" name="course_id" id="af_course_id">
+      <input type="hidden" name="semester_id" id="af_semester_id">
+      <div class="modal-body">
+        <div class="assign-context-card">
+          <div class="assign-context-label">Course</div>
+          <div class="assign-context-value" id="af_course_label">—</div>
+          <div class="assign-context-label" style="margin-top:8px;">Semester</div>
+          <div class="assign-context-value" id="af_semester_label">—</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="af_faculty_id">Select Faculty</label>
+          <select class="form-input" id="af_faculty_id" name="faculty_id" required>
+            <option value="">— Select Faculty —</option>
+            {% for f in faculty_list %}
+              <option value="{{ f.faculty_id }}">{{ f.full_name }} ({{ f.department }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="af_max_capacity">Section Capacity</label>
+          <input type="number" class="form-input" id="af_max_capacity" name="max_capacity" min="1" value="40" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('assignFacultyModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Assign Faculty</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════ Edit Course Modal ═══════════ -->
+<div class="modal-overlay" id="editCourseModal">
+  <div class="modal-container" style="max-width:560px;">
+    <div class="modal-header">
+      <h3>✏️ Edit Course</h3>
+      <button class="modal-close" onclick="closeModal('editCourseModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Course Details Form -->
+      <form method="POST" id="editCourseForm" action="">
+        <div class="form-group">
+          <label class="form-label">Course Code</label>
+          <input type="text" class="form-input" id="ec_course_code" disabled style="opacity:0.6;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ec_course_name">Course Name</label>
+          <input type="text" class="form-input" id="ec_course_name" name="course_name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ec_credit_hours">Credit Hours</label>
+          <input type="number" class="form-input" id="ec_credit_hours" name="credit_hours" min="1" max="3" required>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+          <button type="submit" class="btn btn-primary btn-sm">💾 Save Details</button>
+        </div>
+      </form>
+
+      <!-- Faculty Assignments Section -->
+      <div style="border-top:1px solid var(--border-color); padding-top:18px;">
+        <div class="flex-between" style="margin-bottom:12px;">
+          <h4 style="font-size:14px; font-weight:700; color:var(--text-main); margin:0;">Faculty Assignments</h4>
+          <span class="badge badge-purple" id="ec_semester_badge">—</span>
+        </div>
+        <div id="ec_sections_container">
+          <div class="empty-state" style="padding:20px;">
+            <p style="font-size:13px;">Loading faculty assignments...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Assign Faculty Modal ── */
+function openAssignModal(courseId, courseCode, courseName, semesterId, semesterName) {
+  document.getElementById('af_course_id').value = courseId;
+  document.getElementById('af_semester_id').value = semesterId;
+  document.getElementById('af_course_label').textContent = courseCode + ' — ' + courseName;
+  document.getElementById('af_semester_label').textContent = semesterName;
+  openModal('assignFacultyModal');
+}
+
+/* ── Edit Course Modal ── */
+function openEditModal(courseId, courseCode, courseName, creditHours, semesterId, semesterName) {
+  document.getElementById('ec_course_code').value = courseCode;
+  document.getElementById('ec_course_name').value = courseName;
+  document.getElementById('ec_credit_hours').value = creditHours;
+  document.getElementById('ec_semester_badge').textContent = semesterName;
+  document.getElementById('editCourseForm').action = '/admin/courses/' + courseId + '/update';
+
+  // Load faculty assignments via JSON API
+  loadSections(courseId, semesterId);
+
+  openModal('editCourseModal');
+}
+
+function loadSections(courseId, semesterId) {
+  var container = document.getElementById('ec_sections_container');
+  container.innerHTML = '<div class="empty-state" style="padding:20px;"><p style="font-size:13px;">Loading...</p></div>';
+
+  fetch('/admin/courses/' + courseId + '/sections?semester_id=' + semesterId)
+    .then(function(res) { return res.json(); })
+    .then(function(sections) {
+      if (!sections || sections.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="padding:16px;"><p style="font-size:13px; color:var(--text-muted);">No sections found for this semester.</p></div>';
+        return;
+      }
+
+      var html = '';
+      sections.forEach(function(sec) {
+        html += '<div class="faculty-assignment-row">';
+        html += '  <div class="faculty-assignment-info">';
+        if (sec.faculty_name) {
+          html += '    <span class="badge badge-success">' + sec.faculty_name + '</span>';
+          html += '    <span class="faculty-assignment-meta">Section ' + sec.section_code + ' · Capacity: ' + sec.max_capacity + '</span>';
+        } else {
+          html += '    <span class="badge badge-warning">Unassigned</span>';
+          html += '    <span class="faculty-assignment-meta">Section ' + sec.section_code + ' · Capacity: ' + sec.max_capacity + '</span>';
+        }
+        html += '  </div>';
+        if (sec.faculty_id) {
+          html += '  <form method="POST" action="/admin/courses/unassign-faculty" style="margin:0;">';
+          html += '    <input type="hidden" name="section_id" value="' + sec.section_id + '">';
+          html += '    <button type="submit" class="btn btn-outline btn-sm" style="color:var(--accent-rose); border-color:var(--accent-rose);" title="Unassign faculty">✕ Remove</button>';
+          html += '  </form>';
+        }
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+    })
+    .catch(function() {
+      container.innerHTML = '<div class="empty-state" style="padding:16px;"><p style="font-size:13px; color:var(--accent-rose);">Failed to load sections.</p></div>';
+    });
+}
+</script>
 {% endblock %}
