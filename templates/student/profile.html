@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Student Profile{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>👤 My Profile</h1>
+  <p>View your student information and manage your password</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-content">
+      <div class="stat-number blue" data-count="{{ enrolled_count }}">0</div>
+      <div class="stat-label">Enrolled Courses</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon emerald">🎯</div>
+    <div class="stat-card-content">
+      <div class="stat-number emerald">{{ cgpa if cgpa else '0.00' }}</div>
+      <div class="stat-label">Current CGPA</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon purple">🎓</div>
+    <div class="stat-card-content">
+      <div class="stat-number-text">{{ student.program if student and student.program else '—' }}</div>
+      <div class="stat-label">Program</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon amber">📅</div>
+    <div class="stat-card-content">
+      <div class="stat-number amber" data-count="{{ student.batch_year if student and student.batch_year else 0 }}">0</div>
+      <div class="stat-label">Batch Year</div>
+    </div>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Profile Info Card (Read-Only) -->
+  <div class="card card-static">
+    <div class="card-header">
+      Profile Information
+      <span class="badge badge-purple">Read Only</span>
+    </div>
+    <!-- Profile Avatar Section -->
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border-color);">
+      <div class="profile-avatar">
+        {% if student and student.first_name %}{{ student.first_name[0]|upper }}{% else %}S{% endif %}{% if student and student.last_name %}{{ student.last_name[0]|upper }}{% endif %}
+      </div>
+      <div>
+        <div style="font-size:18px; font-weight:800; color:var(--text-main);">
+          {{ student.first_name if student and student.first_name else '' }} {{ student.last_name if student and student.last_name else '' }}
+        </div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+          {{ student.email if student and student.email else 'No email set' }}
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">First Name</label>
+      <input type="text" class="form-input" value="{{ student.first_name if student and student.first_name else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Last Name</label>
+      <input type="text" class="form-input" value="{{ student.last_name if student and student.last_name else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" value="{{ student.email if student and student.email else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Program</label>
+      <input type="text" class="form-input" value="{{ student.program if student and student.program else '—' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Batch Year</label>
+      <input type="text" class="form-input" value="{{ student.batch_year if student and student.batch_year else '—' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Date of Birth</label>
+      <input type="text" class="form-input" value="{{ student.dob if student and student.dob else '—' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">
+      ℹ️ Profile details are managed by the administration. Contact admin to update.
+    </p>
+  </div>
+
+  <!-- Change Password Card -->
+  <div class="card card-static">
+    <div class="card-header">
+      Change Password
+      <span class="badge badge-warning">🔒 Security</span>
+    </div>
+    <form method="POST" action="{{ url_for('student.change_password') }}">
+      <div class="form-group">
+        <label class="form-label" for="current_password">Current Password</label>
+        <input type="password" class="form-input" id="current_password" name="current_password" required
+               placeholder="Enter your current password">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="new_password">New Password</label>
+        <input type="password" class="form-input" id="new_password" name="new_password" required
+               placeholder="Enter new password" minlength="4">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="confirm_password">Confirm New Password</label>
+        <input type="password" class="form-input" id="confirm_password" name="confirm_password" required
+               placeholder="Re-enter new password" minlength="4">
+      </div>
+      <button type="submit" class="btn btn-primary" style="margin-top:8px;">
+        🔑 Update Password
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
