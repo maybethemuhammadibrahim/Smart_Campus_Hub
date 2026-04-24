@@ -5,6 +5,7 @@ from flask import (
     request, session, url_for,
 )
 from mysql.connector import Error as MySQLError
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from db_connector import execute_query
 from decorators import login_required, role_required
@@ -15,34 +16,32 @@ faculty_bp = Blueprint('faculty', __name__)
 # ── helpers ──────────────────────────────────────────────────
 
 def _faculty_courses(faculty_id):
-    """Return all sections taught by this faculty.
-    cs.section_id is aliased as course_id so all existing route params/
-    template refs (course_id=course.course_id) continue to work unchanged.
+    """Return sections assigned to the given faculty member.
+
+    Uses course_sections as the base table. Returns cs.section_id aliased
+    as 'course_id' so that all URL params and template references continue
+    to work without change.
     """
     return execute_query(
-        """SELECT cs.section_id   AS course_id,
+        """SELECT cs.section_id AS course_id,
                   c.course_code, c.course_name, c.credit_hours,
-                  cs.section_code,
+                  cs.section_code, sm.name AS semester_name,
                   cs.max_capacity,
-                  sm.name        AS semester_name,
                   COUNT(e.enrollment_id) AS enrolled_count
            FROM course_sections cs
-           JOIN courses   c  ON cs.course_id   = c.course_id
+           JOIN courses c ON cs.course_id = c.course_id
            JOIN semesters sm ON cs.semester_id = sm.semester_id
-           LEFT JOIN enrollments e ON cs.section_id = e.section_id
-               AND e.status = 'active'
+           LEFT JOIN enrollments e ON cs.section_id = e.section_id AND e.status = 'active'
            WHERE cs.faculty_id = %s
            GROUP BY cs.section_id, c.course_code, c.course_name,
-                    c.credit_hours, cs.section_code, cs.max_capacity, sm.name
-           ORDER BY c.course_code""",
+                    c.credit_hours, cs.section_code, sm.name, cs.max_capacity
+           ORDER BY c.course_code, cs.section_code""",
         (faculty_id,),
     )
 
 
 def _owns_course(faculty_id, course_id):
-    """course_id param carries section_id value (aliased in _faculty_courses).
-    Ownership is checked against course_sections.
-    """
+    """Check whether the faculty owns the given section (course_id is section_id)."""
     row = execute_query(
         "SELECT section_id FROM course_sections WHERE section_id=%s AND faculty_id=%s",
         (course_id, faculty_id),
@@ -78,23 +77,23 @@ def dashboard():
     courses = _faculty_courses(fid)
     total_students = sum((c.get('enrolled_count') or 0) for c in courses)
 
-    # Average attendance across all sections owned by this faculty
+    # Average attendance across all sections
     avg_attendance = execute_query(
         """SELECT ROUND(AVG(att.attendance_percentage), 1) AS avg_att
            FROM v_attendance_summary att
-           JOIN enrollments     e  ON att.enrollment_id = e.enrollment_id
-           JOIN course_sections cs ON e.section_id      = cs.section_id
+           JOIN enrollments e ON att.enrollment_id = e.enrollment_id
+           JOIN course_sections cs ON e.section_id = cs.section_id
            WHERE cs.faculty_id = %s AND e.status = 'active'""",
         (fid,),
     )
     avg_att = avg_attendance[0]['avg_att'] if avg_attendance and avg_attendance[0]['avg_att'] else 0
 
-    # Average grade across all sections owned by this faculty
+    # Average grade across all sections
     avg_grade = execute_query(
         """SELECT ROUND(AVG(g.marks_obtained), 1) AS avg_marks
            FROM grades g
-           JOIN enrollments     e  ON g.enrollment_id = e.enrollment_id
-           JOIN course_sections cs ON e.section_id    = cs.section_id
+           JOIN enrollments e ON g.enrollment_id = e.enrollment_id
+           JOIN course_sections cs ON e.section_id = cs.section_id
            WHERE cs.faculty_id = %s AND e.status = 'active'
              AND g.marks_obtained IS NOT NULL""",
         (fid,),
@@ -109,10 +108,10 @@ def dashboard():
                   a.status AS detail,
                   a.class_date AS activity_date
            FROM attendance a
-           JOIN enrollments     e  ON a.enrollment_id = e.enrollment_id
-           JOIN students        s  ON e.student_id    = s.student_id
-           JOIN course_sections cs ON e.section_id    = cs.section_id
-           JOIN courses         c  ON cs.course_id    = c.course_id
+           JOIN enrollments e ON a.enrollment_id = e.enrollment_id
+           JOIN students s ON e.student_id = s.student_id
+           JOIN course_sections cs ON e.section_id = cs.section_id
+           JOIN courses c ON cs.course_id = c.course_id
            WHERE cs.faculty_id = %s
            ORDER BY a.class_date DESC LIMIT 5)
           UNION ALL
@@ -122,10 +121,10 @@ def dashboard():
                   CONCAT(g.marks_obtained, '/100 — ', IFNULL(g.letter_grade, 'N/A')) AS detail,
                   e.enrolled_at AS activity_date
            FROM grades g
-           JOIN enrollments     e  ON g.enrollment_id = e.enrollment_id
-           JOIN students        s  ON e.student_id    = s.student_id
-           JOIN course_sections cs ON e.section_id    = cs.section_id
-           JOIN courses         c  ON cs.course_id    = c.course_id
+           JOIN enrollments e ON g.enrollment_id = e.enrollment_id
+           JOIN students s ON e.student_id = s.student_id
+           JOIN course_sections cs ON e.section_id = cs.section_id
+           JOIN courses c ON cs.course_id = c.course_id
            WHERE cs.faculty_id = %s AND g.marks_obtained > 0
            ORDER BY e.enrolled_at DESC LIMIT 5)
           ORDER BY activity_date DESC LIMIT 10""",
@@ -179,7 +178,6 @@ def roster(course_id):
         flash('You do not have access to this course roster.', 'danger')
         return redirect(url_for('faculty.my_courses'))
 
-    # course_id carries section_id — filter enrollments by section_id
     students = execute_query(
         """SELECT s.student_id, s.first_name, s.last_name, s.email,
                   e.enrollment_id, e.enrolled_at,
@@ -194,12 +192,14 @@ def roster(course_id):
         (course_id,),
     )
     course = execute_query(
-        """SELECT c.course_name FROM course_sections cs
+        """SELECT c.course_name, cs.section_code
+           FROM course_sections cs
            JOIN courses c ON cs.course_id = c.course_id
            WHERE cs.section_id = %s""",
         (course_id,),
     )
 
+    # Summary stats
     total = len(students)
     graded = [s for s in students if s.get('marks_obtained') is not None and s['marks_obtained'] > 0]
     avg_marks = round(sum(s['marks_obtained'] for s in graded) / len(graded), 1) if graded else 0
@@ -242,12 +242,11 @@ def mark_attendance(course_id):
             flash('You do not have access to this course.', 'danger')
             return redirect(url_for('faculty.my_courses'))
 
-        # course_id carries section_id
         students = execute_query(
             """SELECT e.enrollment_id, s.first_name, s.last_name
                FROM enrollments e
                JOIN students s ON e.student_id = s.student_id
-               WHERE e.section_id = %s AND e.status = 'active'
+               WHERE e.section_id=%s AND e.status='active'
                ORDER BY s.first_name, s.last_name""",
             (course_id,),
         )
@@ -269,7 +268,7 @@ def submit_attendance():
     marker_user_id = session['user_id']
 
     try:
-        course_id = int(request.form.get('course_id', '0'))  # carries section_id
+        course_id = int(request.form.get('course_id', '0'))
     except (ValueError, TypeError):
         flash('Please select a valid course.', 'danger')
         return redirect(url_for('faculty.mark_attendance'))
@@ -283,7 +282,6 @@ def submit_attendance():
         flash('You do not have access to submit attendance for this course.', 'danger')
         return redirect(url_for('faculty.my_courses'))
 
-    # course_id carries section_id
     enrollments = execute_query(
         "SELECT enrollment_id FROM enrollments WHERE section_id=%s AND status='active'",
         (course_id,),
@@ -305,7 +303,7 @@ def submit_attendance():
                 """INSERT INTO attendance (enrollment_id, class_date, status, marked_by)
                    VALUES (%s, %s, %s, %s)
                    ON DUPLICATE KEY UPDATE
-                     status    = VALUES(status),
+                     status = VALUES(status),
                      marked_by = VALUES(marked_by)""",
                 (enrollment_id, attendance_date, status, marker_user_id),
                 fetch=False,
@@ -333,19 +331,18 @@ def attendance_history(course_id):
         course_id = courses[0]['course_id']
 
     records = []
-    dates   = []
+    dates = []
     if course_id:
         if not _owns_course(fid, course_id):
             flash('You do not have access to this course.', 'danger')
             return redirect(url_for('faculty.my_courses'))
 
-        # course_id carries section_id
         records = execute_query(
             """SELECT a.class_date, a.status,
                       s.first_name, s.last_name, e.enrollment_id
                FROM attendance a
                JOIN enrollments e ON a.enrollment_id = e.enrollment_id
-               JOIN students    s ON e.student_id    = s.student_id
+               JOIN students s ON e.student_id = s.student_id
                WHERE e.section_id = %s AND e.status = 'active'
                ORDER BY a.class_date DESC, s.first_name""",
             (course_id,),
@@ -354,8 +351,8 @@ def attendance_history(course_id):
         dates = execute_query(
             """SELECT DISTINCT a.class_date,
                       COUNT(CASE WHEN a.status = 'present' THEN 1 END) AS present_count,
-                      COUNT(CASE WHEN a.status = 'absent'  THEN 1 END) AS absent_count,
-                      COUNT(CASE WHEN a.status = 'late'    THEN 1 END) AS late_count,
+                      COUNT(CASE WHEN a.status = 'absent' THEN 1 END) AS absent_count,
+                      COUNT(CASE WHEN a.status = 'late' THEN 1 END) AS late_count,
                       COUNT(*) AS total
                FROM attendance a
                JOIN enrollments e ON a.enrollment_id = e.enrollment_id
@@ -387,7 +384,7 @@ def enter_grades(course_id):
     if course_id is None and courses:
         course_id = courses[0]['course_id']
 
-    students    = []
+    students = []
     course_name = 'No Course Selected'
 
     if course_id:
@@ -395,7 +392,6 @@ def enter_grades(course_id):
             flash('You do not have access to this course.', 'danger')
             return redirect(url_for('faculty.my_courses'))
 
-        # course_id carries section_id
         students = execute_query(
             """SELECT e.enrollment_id, s.first_name, s.last_name,
                       g.marks_obtained AS marks, g.letter_grade, g.grade_points
@@ -407,13 +403,14 @@ def enter_grades(course_id):
             (course_id,),
         )
         course = execute_query(
-            """SELECT c.course_name FROM course_sections cs
+            """SELECT c.course_name, cs.section_code
+               FROM course_sections cs
                JOIN courses c ON cs.course_id = c.course_id
                WHERE cs.section_id = %s""",
             (course_id,),
         )
         if course:
-            course_name = course[0]['course_name']
+            course_name = course[0]['course_name'] + ' (Sec ' + (course[0].get('section_code') or 'A') + ')'
 
     return render_template(
         'faculty/enter_grades.html',
@@ -432,7 +429,7 @@ def save_grades():
     fid = session['entity_id']
 
     try:
-        course_id = int(request.form.get('course_id', '0'))  # carries section_id
+        course_id = int(request.form.get('course_id', '0'))
     except (ValueError, TypeError):
         flash('Invalid course selected.', 'danger')
         return redirect(url_for('faculty.enter_grades'))
@@ -441,14 +438,13 @@ def save_grades():
         flash('You do not have access to save grades for this course.', 'danger')
         return redirect(url_for('faculty.my_courses'))
 
-    # course_id carries section_id
     enrollments = execute_query(
         "SELECT enrollment_id FROM enrollments WHERE section_id=%s AND status='active'",
         (course_id,),
     )
 
     updated = 0
-    errors  = 0
+    errors = 0
     for row in enrollments:
         enrollment_id = row['enrollment_id']
         marks_raw = request.form.get(f'marks_{enrollment_id}')
@@ -461,7 +457,9 @@ def save_grades():
             errors += 1
             continue
 
+        # Clamp to valid range
         marks = max(0.0, min(100.0, marks))
+
         letter, points = _compute_letter_grade(marks)
 
         try:
@@ -472,9 +470,9 @@ def save_grades():
                     VALUES (%s, %s, 100, %s, %s)
                     ON DUPLICATE KEY UPDATE
                         marks_obtained = VALUES(marks_obtained),
-                        total_marks    = VALUES(total_marks),
-                        letter_grade   = VALUES(letter_grade),
-                        grade_points   = VALUES(grade_points)""",
+                        total_marks = VALUES(total_marks),
+                        letter_grade = VALUES(letter_grade),
+                        grade_points = VALUES(grade_points)""",
                 (enrollment_id, marks, letter, points),
                 fetch=False,
             )
@@ -483,7 +481,7 @@ def save_grades():
             errors += 1
             flash(f'Error saving grade: {str(e)}', 'danger')
 
-    # students.cgpa is computed via v_student_cgpa view — no write-back needed
+    # CGPA write-back REMOVED — cgpa is now computed via v_student_cgpa view
 
     msg = f'Grades saved for {updated} student(s).'
     if errors:
@@ -507,24 +505,24 @@ def analytics(course_id):
     if course_id is None and courses:
         course_id = courses[0]['course_id']
 
-    stats        = {}
-    grade_dist   = []
+    stats = {}
+    grade_dist = []
     top_students = []
-    at_risk      = []
+    at_risk = []
 
     if course_id:
         if not _owns_course(fid, course_id):
             flash('You do not have access to this course.', 'danger')
             return redirect(url_for('faculty.my_courses'))
 
-        # course_id carries section_id
+        # Overall stats
         stats_row = execute_query(
             """SELECT
-                   COUNT(e.enrollment_id)                          AS total_students,
-                   ROUND(AVG(g.marks_obtained), 1)                AS avg_marks,
-                   MAX(g.marks_obtained)                           AS highest,
-                   MIN(g.marks_obtained)                           AS lowest,
-                   ROUND(AVG(att.attendance_percentage), 1)        AS avg_attendance
+                   COUNT(e.enrollment_id) AS total_students,
+                   ROUND(AVG(g.marks_obtained), 1) AS avg_marks,
+                   MAX(g.marks_obtained) AS highest,
+                   MIN(g.marks_obtained) AS lowest,
+                   ROUND(AVG(att.attendance_percentage), 1) AS avg_attendance
                FROM enrollments e
                LEFT JOIN grades g ON e.enrollment_id = g.enrollment_id
                LEFT JOIN v_attendance_summary att ON att.enrollment_id = e.enrollment_id
@@ -533,6 +531,7 @@ def analytics(course_id):
         )
         stats = stats_row[0] if stats_row else {}
 
+        # Grade distribution
         grade_dist = execute_query(
             """SELECT g.letter_grade, COUNT(*) AS count
                FROM grades g
@@ -544,26 +543,28 @@ def analytics(course_id):
             (course_id,),
         )
 
+        # Top performers
         top_students = execute_query(
             """SELECT s.first_name, s.last_name, g.marks_obtained, g.letter_grade
                FROM enrollments e
                JOIN students s ON e.student_id = s.student_id
-               JOIN grades   g ON e.enrollment_id = g.enrollment_id
+               JOIN grades g ON e.enrollment_id = g.enrollment_id
                WHERE e.section_id = %s AND e.status = 'active'
                  AND g.marks_obtained IS NOT NULL
                ORDER BY g.marks_obtained DESC LIMIT 5""",
             (course_id,),
         )
 
+        # At-risk students (low attendance or failing)
         at_risk = execute_query(
             """SELECT s.first_name, s.last_name, s.email,
                       COALESCE(att.attendance_percentage, 0) AS attendance,
-                      COALESCE(g.marks_obtained, 0)          AS marks,
+                      COALESCE(g.marks_obtained, 0) AS marks,
                       g.letter_grade
                FROM enrollments e
                JOIN students s ON e.student_id = s.student_id
                LEFT JOIN v_attendance_summary att ON att.enrollment_id = e.enrollment_id
-               LEFT JOIN grades               g   ON g.enrollment_id  = e.enrollment_id
+               LEFT JOIN grades g ON g.enrollment_id = e.enrollment_id
                WHERE e.section_id = %s AND e.status = 'active'
                  AND (att.attendance_percentage < 75
                       OR g.letter_grade IN ('F', 'C', 'C+')
@@ -573,7 +574,7 @@ def analytics(course_id):
         )
 
     course_info = execute_query(
-        """SELECT c.course_name, c.course_code
+        """SELECT c.course_name, c.course_code, cs.section_code
            FROM course_sections cs
            JOIN courses c ON cs.course_id = c.course_id
            WHERE cs.section_id = %s""",
@@ -611,31 +612,49 @@ def profile():
     )
 
 
-@faculty_bp.route('/profile/update', methods=['POST'])
+@faculty_bp.route('/change-password', methods=['POST'])
 @login_required
 @role_required('faculty')
-def update_profile():
-    fid = session['entity_id']
+def change_password():
+    user_id = session['user_id']
 
-    email       = request.form.get('email', '').strip()
-    department  = request.form.get('department', '').strip()
-    designation = request.form.get('designation', '').strip()
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
 
-    if not email or '@' not in email:
-        flash('A valid email is required.', 'danger')
+    if not all([current_password, new_password, confirm_password]):
+        flash('All password fields are required.', 'danger')
         return redirect(url_for('faculty.profile'))
 
+    if new_password != confirm_password:
+        flash('New password and confirmation do not match.', 'danger')
+        return redirect(url_for('faculty.profile'))
+
+    if len(new_password) < 4:
+        flash('Password must be at least 4 characters long.', 'danger')
+        return redirect(url_for('faculty.profile'))
+
+    # Verify current password
+    user = execute_query("SELECT password FROM users WHERE user_id=%s", (user_id,))
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('faculty.profile'))
+
+    if not check_password_hash(user[0]['password'], current_password):
+        flash('Current password is incorrect.', 'danger')
+        return redirect(url_for('faculty.profile'))
+
+    # Store hashed password
     try:
+        hashed = generate_password_hash(new_password)
         execute_query(
-            """UPDATE faculty
-               SET email = %s, department = %s, designation = %s
-               WHERE faculty_id = %s""",
-            (email, department, designation, fid),
+            "UPDATE users SET password = %s WHERE user_id = %s",
+            (hashed, user_id),
             fetch=False,
         )
-        flash('Profile updated successfully.', 'success')
+        flash('Password updated successfully.', 'success')
     except MySQLError as e:
-        flash(f'Error updating profile: {str(e)}', 'danger')
+        flash(f'Error updating password: {str(e)}', 'danger')
 
     return redirect(url_for('faculty.profile'))
 
@@ -646,14 +665,11 @@ def update_profile():
 @login_required
 @role_required('faculty')
 def api_course_students(course_id):
-    """Returns JSON list of students for dynamic course switching.
-    course_id in URL carries section_id (aliased in _faculty_courses).
-    """
+    """Returns JSON list of students for dynamic course switching."""
     fid = session['entity_id']
     if not _owns_course(fid, course_id):
         return jsonify({'error': 'Access denied'}), 403
 
-    # course_id carries section_id
     students = execute_query(
         """SELECT e.enrollment_id, s.first_name, s.last_name
            FROM enrollments e

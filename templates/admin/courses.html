@@ -17,11 +17,14 @@
         <tr>
           <th>Course Code</th>
           <th>Course Name</th>
+
+
           <th>Credit Hours</th>
           <th>Semester</th>
           <th>Faculty</th>
           <th>Enrolled / Capacity</th>
           <th>Actions</th>
+
         </tr>
       </thead>
       <tbody>
@@ -29,7 +32,9 @@
         <tr>
           <td><span class="badge badge-info">{{ c.course_code }}</span></td>
           <td style="font-weight:600;">{{ c.course_name }}</td>
+          <td><span class="badge badge-purple" style="font-size:10px;">{{ c.section_code if c.section_code else 'A' }}</span></td>
           <td>{{ c.credit_hours }}</td>
+
           <td>
             {% if c.semester_name %}
               <span class="badge badge-purple">{{ c.semester_name }}</span>
@@ -37,6 +42,7 @@
               —
             {% endif %}
           </td>
+
           <td>
             {% if c.faculty_names %}
               {% for name in c.faculty_names.split(', ') %}
@@ -67,6 +73,7 @@
               </button>
             </div>
           </td>
+
         </tr>
         {% endfor %}
       </tbody>

@@ -125,6 +125,6 @@ FROM enrollments     e
 JOIN grades          g  ON e.enrollment_id = g.enrollment_id
 JOIN course_sections cs ON e.section_id   = cs.section_id
 JOIN courses         c  ON cs.course_id   = c.course_id
-WHERE e.status = 'completed'
+WHERE e.status IN ('active', 'completed')
   AND g.grade_points IS NOT NULL
 GROUP BY e.student_id;

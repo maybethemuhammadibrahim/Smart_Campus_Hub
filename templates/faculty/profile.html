@@ -5,7 +5,7 @@
 <!-- Welcome Banner -->
 <div class="welcome-banner">
   <h1>👤 My Profile</h1>
-  <p>View and update your faculty information</p>
+  <p>View your faculty information and manage your password</p>
 </div>
 
 <!-- Stat Cards -->
@@ -27,25 +27,25 @@
   <div class="stat-card">
     <div class="stat-card-icon purple">🏷️</div>
     <div class="stat-card-content">
-      <div class="stat-number purple">{{ faculty.designation if faculty and faculty.designation else '—' }}</div>
+      <div class="stat-number-text">{{ faculty.designation if faculty and faculty.designation else '—' }}</div>
       <div class="stat-label">Designation</div>
     </div>
   </div>
   <div class="stat-card">
     <div class="stat-card-icon amber">🏢</div>
     <div class="stat-card-content">
-      <div class="stat-number amber">{{ faculty.department if faculty and faculty.department else '—' }}</div>
+      <div class="stat-number-text">{{ faculty.department if faculty and faculty.department else '—' }}</div>
       <div class="stat-label">Department</div>
     </div>
   </div>
 </div>
 
 <div class="two-col">
-  <!-- Profile Info Card -->
+  <!-- Profile Info Card (Read-Only) -->
   <div class="card card-static">
     <div class="card-header">
       Profile Information
-      <span class="badge badge-info">Editable</span>
+      <span class="badge badge-purple">Read Only</span>
     </div>
     <!-- Profile Avatar Section -->
     <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border-color);">
@@ -61,79 +61,109 @@
         </div>
       </div>
     </div>
-    <form method="POST" action="{{ url_for('faculty.update_profile') }}">
-      <div class="form-group">
-        <label class="form-label">First Name</label>
-        <input type="text" class="form-input" value="{{ faculty.first_name if faculty and faculty.first_name else '' }}" disabled
-               style="background: var(--bg-hover); cursor:not-allowed;">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Last Name</label>
-        <input type="text" class="form-input" value="{{ faculty.last_name if faculty and faculty.last_name else '' }}" disabled
-               style="background: var(--bg-hover); cursor:not-allowed;">
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="email">Email</label>
-        <input type="email" class="form-input" id="email" name="email"
-               value="{{ faculty.email if faculty and faculty.email else '' }}" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="department">Department</label>
-        <input type="text" class="form-input" id="department" name="department"
-               value="{{ faculty.department if faculty and faculty.department else '' }}">
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="designation">Designation</label>
-        <input type="text" class="form-input" id="designation" name="designation"
-               value="{{ faculty.designation if faculty and faculty.designation else '' }}">
-      </div>
-      <button type="submit" class="btn btn-primary" style="margin-top:8px;">
-        💾 Save Changes
-      </button>
-    </form>
+    <div class="form-group">
+      <label class="form-label">First Name</label>
+      <input type="text" class="form-input" value="{{ faculty.first_name if faculty and faculty.first_name else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Last Name</label>
+      <input type="text" class="form-input" value="{{ faculty.last_name if faculty and faculty.last_name else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" value="{{ faculty.email if faculty and faculty.email else '' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Department</label>
+      <input type="text" class="form-input" value="{{ faculty.department if faculty and faculty.department else '—' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Designation</label>
+      <input type="text" class="form-input" value="{{ faculty.designation if faculty and faculty.designation else '—' }}" disabled
+             style="background: var(--bg-hover); cursor:not-allowed;">
+    </div>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">
+      ℹ️ Profile details are managed by the administration. Contact admin to update.
+    </p>
   </div>
 
-  <!-- Assigned Courses -->
-  <div class="card card-static">
-    <div class="card-header">
-      Assigned Courses
-      <span class="badge badge-info">{{ courses|length if courses else 0 }}</span>
+  <!-- Right Column -->
+  <div>
+    <!-- Change Password Card -->
+    <div class="card card-static" style="margin-bottom:20px;">
+      <div class="card-header">
+        Change Password
+        <span class="badge badge-warning">🔒 Security</span>
+      </div>
+      <form method="POST" action="{{ url_for('faculty.change_password') }}">
+        <div class="form-group">
+          <label class="form-label" for="current_password">Current Password</label>
+          <input type="password" class="form-input" id="current_password" name="current_password" required
+                 placeholder="Enter your current password">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new_password">New Password</label>
+          <input type="password" class="form-input" id="new_password" name="new_password" required
+                 placeholder="Enter new password" minlength="4">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm New Password</label>
+          <input type="password" class="form-input" id="confirm_password" name="confirm_password" required
+                 placeholder="Re-enter new password" minlength="4">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top:8px;">
+          🔑 Update Password
+        </button>
+      </form>
     </div>
-    {% if courses %}
-      {% for course in courses %}
-      <div style="padding:14px 0; border-bottom:1px solid var(--border-color); {% if loop.last %}border-bottom:none;{% endif %}">
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <div>
-            <span class="badge badge-info" style="margin-bottom:4px;">{{ course.course_code }}</span>
-            <div style="font-size:14px; font-weight:600; color:var(--text-main); margin-top:6px;">
-              {{ course.course_name }}
+
+    <!-- Assigned Courses -->
+    <div class="card card-static">
+      <div class="card-header">
+        Assigned Courses
+        <span class="badge badge-info">{{ courses|length if courses else 0 }}</span>
+      </div>
+      {% if courses %}
+        {% for course in courses %}
+        <div style="padding:14px 0; border-bottom:1px solid var(--border-color); {% if loop.last %}border-bottom:none;{% endif %}">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div>
+              <span class="badge badge-info" style="margin-bottom:4px;">{{ course.course_code }}</span>
+              <span class="badge badge-purple" style="font-size:10px; margin-left:4px;">Sec {{ course.section_code if course.section_code else 'A' }}</span>
+              <div style="font-size:14px; font-weight:600; color:var(--text-main); margin-top:6px;">
+                {{ course.course_name }}
+              </div>
             </div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:12px; color:var(--text-muted);">
-              👥 {{ course.enrolled_count if course.enrolled_count else 0 }} students
-            </div>
-            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
-              📖 {{ course.credit_hours if course.credit_hours else 0 }} credits
+            <div style="text-align:right;">
+              <div style="font-size:12px; color:var(--text-muted);">
+                👥 {{ course.enrolled_count if course.enrolled_count else 0 }} students
+              </div>
+              <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+                📖 {{ course.credit_hours if course.credit_hours else 0 }} credits
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      {% endfor %}
+        {% endfor %}
 
-      <!-- Quick Links -->
-      <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
-        <a href="{{ url_for('faculty.roster') }}" class="btn btn-outline btn-sm">👥 View Roster</a>
-        <a href="{{ url_for('faculty.enter_grades') }}" class="btn btn-outline btn-sm">📝 Grades</a>
-        <a href="{{ url_for('faculty.analytics') }}" class="btn btn-outline btn-sm">📈 Analytics</a>
-      </div>
-    {% else %}
-      <div class="empty-state" style="padding:24px;">
-        <div class="empty-state-icon">📚</div>
-        <h3>No courses assigned</h3>
-        <p>Contact the administration to get courses assigned.</p>
-      </div>
-    {% endif %}
+        <!-- Quick Links -->
+        <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+          <a href="{{ url_for('faculty.roster') }}" class="btn btn-outline btn-sm">👥 View Roster</a>
+          <a href="{{ url_for('faculty.enter_grades') }}" class="btn btn-outline btn-sm">📝 Grades</a>
+          <a href="{{ url_for('faculty.analytics') }}" class="btn btn-outline btn-sm">📈 Analytics</a>
+        </div>
+      {% else %}
+        <div class="empty-state" style="padding:24px;">
+          <div class="empty-state-icon">📚</div>
+          <h3>No courses assigned</h3>
+          <p>Contact the administration to get courses assigned.</p>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

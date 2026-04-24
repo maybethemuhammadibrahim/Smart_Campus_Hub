@@ -40,6 +40,10 @@
         <a href="{{ url_for('student.transcript') }}" class="nav-link {% if request.endpoint == 'student.transcript' %}active{% endif %}">
           <span class="nav-icon">🎓</span> Transcript
         </a>
+        <div class="nav-section-label">Account</div>
+        <a href="{{ url_for('student.profile') }}" class="nav-link {% if request.endpoint == 'student.profile' %}active{% endif %}">
+          <span class="nav-icon">👤</span> Profile
+        </a>
 
       {% elif session.get('role') == 'faculty' %}
         <div class="nav-section-label">Main</div>

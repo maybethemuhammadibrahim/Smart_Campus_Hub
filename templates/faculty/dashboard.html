@@ -81,7 +81,7 @@
           <tbody>
             {% for course in courses %}
             <tr>
-              <td><span class="badge badge-info">{{ course.course_code }}</span></td>
+              <td><span class="badge badge-info">{{ course.course_code }}</span> <span class="badge badge-purple" style="font-size:10px;">Sec {{ course.section if course.section else 'A' }}</span></td>
               <td>{{ course.course_name }}</td>
               <td>{{ course.enrolled_count if course.enrolled_count else 0 }}</td>
               <td>
