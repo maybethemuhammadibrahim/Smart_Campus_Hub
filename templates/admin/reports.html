@@ -20,6 +20,8 @@
           <tr>
             <th>Course Code</th>
             <th>Course Name</th>
+            <th>Section</th>
+            <th>Semester</th>
             <th>Faculty</th>
             <th>Enrolled</th>
             <th>Capacity</th>
@@ -31,6 +33,8 @@
           <tr>
             <td><span class="badge badge-info">{{ row.course_code }}</span></td>
             <td style="font-weight:600;">{{ row.course_name }}</td>
+            <td><span class="badge badge-purple" style="font-size:10px;">{{ row.section_code if row.section_code else '—' }}</span></td>
+            <td><span class="badge badge-purple">{{ row.semester_name if row.semester_name else '—' }}</span></td>
             <td>{{ row.faculty_name if row.faculty_name else '—' }}</td>
             <td style="font-weight:700;">{{ row.enrolled }}</td>
             <td>{{ row.capacity }}</td>

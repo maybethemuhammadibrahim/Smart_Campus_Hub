@@ -18,28 +18,29 @@ def _redirect_back(fallback_endpoint):
 @login_required
 @role_required('admin')
 def dashboard():
-	total_students    = execute_query("SELECT COUNT(*) AS total FROM students")
-	total_faculty     = execute_query("SELECT COUNT(*) AS total FROM faculty")
-	total_courses     = execute_query("SELECT COUNT(*) AS total FROM courses")
+	total_students = execute_query("SELECT COUNT(*) AS total FROM students")
+	total_faculty = execute_query("SELECT COUNT(*) AS total FROM faculty")
+	total_courses = execute_query("SELECT COUNT(*) AS total FROM courses")
 	total_enrollments = execute_query("SELECT COUNT(*) AS total FROM enrollments WHERE status='active'")
 
+	# Fixed: JOIN through course_sections to reach courses
 	recent_activity = execute_query(
 		"""SELECT DATE_FORMAT(e.enrolled_at, '%Y-%m-%d') AS date,
-		          'Enrollment' AS type,
-		          CONCAT(s.first_name, ' ', s.last_name, ' enrolled in ', c.course_code) AS details
+				  'Enrollment' AS type,
+				  CONCAT(s.first_name, ' ', s.last_name, ' enrolled in ', c.course_code) AS details
 		   FROM enrollments e
-		   JOIN students        s  ON e.student_id  = s.student_id
-		   JOIN course_sections cs ON e.section_id  = cs.section_id
-		   JOIN courses         c  ON cs.course_id  = c.course_id
+		   JOIN students s ON e.student_id = s.student_id
+		   JOIN course_sections cs ON e.section_id = cs.section_id
+		   JOIN courses c ON cs.course_id = c.course_id
 		   ORDER BY e.enrolled_at DESC
 		   LIMIT 10"""
 	)
 
 	return render_template(
 		'admin/dashboard.html',
-		total_students=total_students[0]['total']       if total_students    else 0,
-		total_faculty=total_faculty[0]['total']         if total_faculty     else 0,
-		total_courses=total_courses[0]['total']         if total_courses     else 0,
+		total_students=total_students[0]['total'] if total_students else 0,
+		total_faculty=total_faculty[0]['total'] if total_faculty else 0,
+		total_courses=total_courses[0]['total'] if total_courses else 0,
 		total_enrollments=total_enrollments[0]['total'] if total_enrollments else 0,
 		recent_activity=recent_activity,
 	)
@@ -49,14 +50,15 @@ def dashboard():
 @login_required
 @role_required('admin')
 def students():
+	# Fixed: cgpa sourced via v_student_cgpa LEFT JOIN
 	records = execute_query(
 		"""SELECT s.student_id, s.first_name, s.last_name, s.email,
-		          s.program, s.batch_year, s.dob,
-		          u.is_active,
-		          vc.cgpa
+				  s.program, s.batch_year,
+				  COALESCE(v.cgpa, 0.00) AS cgpa,
+				  u.is_active
 		   FROM students s
 		   JOIN users u ON s.user_id = u.user_id
-		   LEFT JOIN v_student_cgpa vc ON vc.student_id = s.student_id
+		   LEFT JOIN v_student_cgpa v ON s.student_id = v.student_id
 		   ORDER BY s.student_id DESC"""
 	)
 	return render_template('admin/students.html', students=records)
@@ -68,8 +70,8 @@ def students():
 def faculty_list():
 	records = execute_query(
 		"""SELECT f.faculty_id, f.first_name, f.last_name, f.email,
-		          f.department, f.designation,
-		          u.is_active
+				  f.department, f.designation,
+				  u.is_active
 		   FROM faculty f
 		   JOIN users u ON f.user_id = u.user_id
 		   ORDER BY f.faculty_id DESC"""
@@ -81,9 +83,14 @@ def faculty_list():
 @login_required
 @role_required('admin')
 def courses():
-	# v_admin_enrollment_report already joins course_sections + courses + semesters + faculty
+	# Fixed: use v_admin_enrollment_report view
 	data = execute_query(
-		"""SELECT * FROM v_admin_enrollment_report ORDER BY course_code, semester_name"""
+		"""SELECT course_id, course_code, course_name, credit_hours,
+				  section_id, section_code, semester_name,
+				  faculty_name, max_capacity,
+				  enrolled_count, seats_remaining, fill_percentage
+		   FROM v_admin_enrollment_report
+		   ORDER BY course_code, section_code"""
 	)
 	return render_template('admin/courses.html', courses=data)
 
@@ -93,44 +100,45 @@ def courses():
 @role_required('admin')
 def reports():
 	enrollment_report = execute_query(
-		"""SELECT course_code, course_name, faculty_name,
-		          enrolled_count AS enrolled,
-		          max_capacity   AS capacity,
-		          fill_percentage
+		"""SELECT course_code, course_name, section_code, semester_name,
+				  faculty_name,
+				  enrolled_count AS enrolled,
+				  max_capacity AS capacity,
+				  fill_percentage
 		   FROM v_admin_enrollment_report
 		   ORDER BY enrolled_count DESC"""
 	)
 
-	# GPA distribution — uses v_student_cgpa (students.cgpa no longer exists)
+	# Fixed: use v_student_cgpa instead of students.cgpa
 	gpa_dist = execute_query(
 		"""SELECT
-		       CASE
-		           WHEN vc.cgpa >= 3.5 THEN '3.5 - 4.0 (Dean''s List)'
-		           WHEN vc.cgpa >= 3.0 THEN '3.0 - 3.49 (Good)'
-		           WHEN vc.cgpa >= 2.5 THEN '2.5 - 2.99 (Satisfactory)'
-		           WHEN vc.cgpa >= 2.0 THEN '2.0 - 2.49 (Passing)'
-		           ELSE                     'Below 2.0 (At Risk)'
-		       END AS gpa_range,
-		       COUNT(vc.student_id) AS student_count
-		   FROM v_student_cgpa vc
+			   CASE
+				   WHEN cgpa >= 3.5 THEN '3.5 - 4.0 (Dean''s List)'
+				   WHEN cgpa >= 3.0 THEN '3.0 - 3.49 (Good)'
+				   WHEN cgpa >= 2.5 THEN '2.5 - 2.99 (Satisfactory)'
+				   WHEN cgpa >= 2.0 THEN '2.0 - 2.49 (Passing)'
+				   ELSE                   'Below 2.0 (At Risk)'
+			   END AS gpa_range,
+			   COUNT(student_id) AS student_count
+		   FROM v_student_cgpa
 		   GROUP BY gpa_range
-		   ORDER BY MIN(vc.cgpa) DESC"""
+		   ORDER BY MIN(cgpa) DESC"""
 	)
 
-	# Faculty load — uses course_sections (courses.faculty_id no longer exists)
+	# Fixed: use course_sections instead of courses.faculty_id
 	faculty_load = execute_query(
 		"""SELECT
-		       CONCAT(f.first_name, ' ', f.last_name) AS faculty_name,
-		       f.department,
-		       COUNT(DISTINCT cs.section_id) AS course_count,
-		       COALESCE(SUM(sub.enrolled), 0) AS total_students
+			   CONCAT(f.first_name, ' ', f.last_name) AS faculty_name,
+			   f.department,
+			   COUNT(DISTINCT cs.section_id) AS course_count,
+			   COALESCE(SUM(sub.enrolled), 0) AS total_students
 		   FROM faculty f
 		   LEFT JOIN course_sections cs ON f.faculty_id = cs.faculty_id
 		   LEFT JOIN (
-		       SELECT section_id, COUNT(*) AS enrolled
-		       FROM enrollments
-		       WHERE status = 'active'
-		       GROUP BY section_id
+			   SELECT section_id, COUNT(*) AS enrolled
+			   FROM enrollments
+			   WHERE status = 'active'
+			   GROUP BY section_id
 		   ) sub ON cs.section_id = sub.section_id
 		   GROUP BY f.faculty_id, f.first_name, f.last_name, f.department
 		   ORDER BY total_students DESC"""
@@ -148,14 +156,14 @@ def reports():
 @login_required
 @role_required('admin')
 def add_student():
-	first_name  = request.form.get('first_name', '').strip()
-	last_name   = request.form.get('last_name', '').strip()
-	email       = request.form.get('email', '').strip()
-	dob         = request.form.get('dob', '').strip()
-	program     = request.form.get('program', '').strip()
-	batch_year  = request.form.get('batch_year', '').strip()
-	username    = request.form.get('username', '').strip()
-	password    = request.form.get('password', '')
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	dob = request.form.get('dob', '').strip()
+	program = request.form.get('program', '').strip()
+	batch_year = request.form.get('batch_year', '').strip()
+	username = request.form.get('username', '').strip()
+	password = request.form.get('password', '')
 
 	if not all([first_name, last_name, email, program, batch_year, username, password]):
 		flash('All required student fields must be filled.', 'danger')
@@ -182,13 +190,13 @@ def add_student():
 @login_required
 @role_required('admin')
 def add_faculty():
-	first_name  = request.form.get('first_name', '').strip()
-	last_name   = request.form.get('last_name', '').strip()
-	email       = request.form.get('email', '').strip()
-	department  = request.form.get('department', '').strip()
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	department = request.form.get('department', '').strip()
 	designation = request.form.get('designation', '').strip()
-	username    = request.form.get('username', '').strip()
-	password    = request.form.get('password', '')
+	username = request.form.get('username', '').strip()
+	password = request.form.get('password', '')
 
 	if not all([first_name, last_name, email, department, designation, username, password]):
 		flash('All faculty fields are required.', 'danger')
@@ -215,34 +223,33 @@ def add_faculty():
 @login_required
 @role_required('admin')
 def create_course():
-	course_code  = request.form.get('course_code', '').strip()
-	course_name  = request.form.get('course_name', '').strip()
+	course_code = request.form.get('course_code', '').strip()
+	course_name = request.form.get('course_name', '').strip()
 	credit_hours = request.form.get('credit_hours', '').strip()
-	semester     = request.form.get('semester', '').strip()
-	max_capacity = request.form.get('max_capacity', '').strip()
+	semester = request.form.get('semester', '').strip()
 	section_code = request.form.get('section_code', 'A').strip() or 'A'
+	max_capacity = request.form.get('max_capacity', '').strip()
 
 	if not all([course_code, course_name, credit_hours, semester, max_capacity]):
 		flash('All course fields are required.', 'danger')
 		return _redirect_back('admin.courses')
 
-	# Step 1: resolve or create the semester row
-	sem_rows = execute_query(
+	# Step 1: Resolve or create semester
+	sem_row = execute_query(
 		"SELECT semester_id FROM semesters WHERE name = %s",
 		(semester,),
 	)
-	if sem_rows:
-		semester_id = sem_rows[0]['semester_id']
+	if sem_row:
+		semester_id = sem_row[0]['semester_id']
 	else:
-		# Create a placeholder semester (dates can be updated later)
 		semester_id = execute_query(
 			"""INSERT INTO semesters (name, start_date, end_date, is_active)
-			   VALUES (%s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), FALSE)""",
+			   VALUES (%s, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 6 MONTH), TRUE)""",
 			(semester,),
 			fetch=False,
 		)
 
-	# Step 2: insert catalog course (course_code must be unique)
+	# Step 2: Upsert course catalog entry
 	existing = execute_query(
 		"SELECT course_id FROM courses WHERE course_code = %s",
 		(course_code,),
@@ -256,11 +263,10 @@ def create_course():
 			fetch=False,
 		)
 
-	# Step 3: insert the section offering
+	# Step 3: Insert course_section
 	execute_query(
-		"""INSERT INTO course_sections
-		       (course_id, semester_id, faculty_id, section_code, max_capacity)
-		   VALUES (%s, %s, NULL, %s, %s)""",
+		"""INSERT INTO course_sections (course_id, semester_id, section_code, max_capacity)
+		   VALUES (%s, %s, %s, %s)""",
 		(course_id, semester_id, section_code, max_capacity),
 		fetch=False,
 	)
@@ -273,18 +279,19 @@ def create_course():
 @login_required
 @role_required('admin')
 def update_student(student_id):
-	first_name  = request.form.get('first_name', '').strip()
-	last_name   = request.form.get('last_name', '').strip()
-	email       = request.form.get('email', '').strip()
-	dob         = request.form.get('dob', '').strip()
-	program     = request.form.get('program', '').strip()
-	batch_year  = request.form.get('batch_year', '').strip()
-	is_active   = request.form.get('is_active', '0')
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	dob = request.form.get('dob', '').strip()
+	program = request.form.get('program', '').strip()
+	batch_year = request.form.get('batch_year', '').strip()
+	is_active = request.form.get('is_active', '0')
 
 	if not all([first_name, last_name, email, program, batch_year]):
 		flash('All required fields must be filled.', 'danger')
 		return _redirect_back('admin.students')
 
+	# Get user_id for this student
 	student = execute_query(
 		"SELECT user_id FROM students WHERE student_id = %s",
 		(student_id,)
@@ -296,15 +303,17 @@ def update_student(student_id):
 
 	user_id = student[0]['user_id']
 
+	# Update student info
 	execute_query(
-		"""UPDATE students
-		   SET first_name = %s, last_name = %s, email = %s, dob = %s,
+		"""UPDATE students 
+		   SET first_name = %s, last_name = %s, email = %s, dob = %s, 
 		       program = %s, batch_year = %s
 		   WHERE student_id = %s""",
 		(first_name, last_name, email, dob if dob else None, program, batch_year, student_id),
 		fetch=False,
 	)
 
+	# Update user status
 	execute_query(
 		"UPDATE users SET is_active = %s WHERE user_id = %s",
 		(int(is_active), user_id),
@@ -319,17 +328,18 @@ def update_student(student_id):
 @login_required
 @role_required('admin')
 def update_faculty(faculty_id):
-	first_name  = request.form.get('first_name', '').strip()
-	last_name   = request.form.get('last_name', '').strip()
-	email       = request.form.get('email', '').strip()
-	department  = request.form.get('department', '').strip()
+	first_name = request.form.get('first_name', '').strip()
+	last_name = request.form.get('last_name', '').strip()
+	email = request.form.get('email', '').strip()
+	department = request.form.get('department', '').strip()
 	designation = request.form.get('designation', '').strip()
-	is_active   = request.form.get('is_active', '0')
+	is_active = request.form.get('is_active', '0')
 
 	if not all([first_name, last_name, email, department, designation]):
 		flash('All required fields must be filled.', 'danger')
 		return _redirect_back('admin.faculty_list')
 
+	# Get user_id for this faculty
 	faculty = execute_query(
 		"SELECT user_id FROM faculty WHERE faculty_id = %s",
 		(faculty_id,)
@@ -341,15 +351,17 @@ def update_faculty(faculty_id):
 
 	user_id = faculty[0]['user_id']
 
+	# Update faculty info
 	execute_query(
-		"""UPDATE faculty
-		   SET first_name = %s, last_name = %s, email = %s,
+		"""UPDATE faculty 
+		   SET first_name = %s, last_name = %s, email = %s, 
 		       department = %s, designation = %s
 		   WHERE faculty_id = %s""",
 		(first_name, last_name, email, department, designation, faculty_id),
 		fetch=False,
 	)
 
+	# Update user status
 	execute_query(
 		"UPDATE users SET is_active = %s WHERE user_id = %s",
 		(int(is_active), user_id),

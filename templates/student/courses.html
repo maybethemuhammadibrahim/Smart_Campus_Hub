@@ -15,6 +15,7 @@
           <th>Course Code</th>
           <th>Course Name</th>
           <th>Credit Hours</th>
+          <th>Semester</th>
           <th>Faculty</th>
           <th>Seats Available</th>
           <th>Action</th>
@@ -26,6 +27,7 @@
           <td><span class="badge badge-info">{{ course.course_code }}</span></td>
           <td>{{ course.course_name }}</td>
           <td>{{ course.credit_hours }}</td>
+          <td><span class="badge badge-purple">{{ course.semester_name if course.semester_name else '—' }}</span></td>
           <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
           <td>
             {% if course.seats_left > 5 %}
@@ -37,7 +39,7 @@
             {% endif %}
           </td>
           <td>
-            <form method="POST" action="{{ url_for('student.enroll', course_id=course.course_id) }}" style="display:inline;" data-confirm="Are you sure you want to enroll in {{ course.course_name }}?">
+            <form method="POST" action="{{ url_for('student.enroll', section_id=course.section_id) }}" style="display:inline;" data-confirm="Are you sure you want to enroll in {{ course.course_name }}?">
               <button type="submit" class="btn btn-primary btn-sm">➕ Enroll</button>
             </form>
           </td>

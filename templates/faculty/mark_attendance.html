@@ -8,19 +8,23 @@
 </div>
 
 <form method="POST" action="{{ url_for('faculty.submit_attendance') }}" data-confirm="Submit attendance for all listed students?">
+  <!-- Course + Section Selector -->
+  {% set courses_json = [] %}
+  {% for course in courses %}
+    {% set _ = courses_json.append({'id': course.course_id, 'code': course.course_code, 'name': course.course_name, 'section': course.section|default('A')}) %}
+  {% endfor %}
   <div class="card card-static section-mb" style="padding: 18px 24px;">
-    <div class="form-row">
+    <div class="course-picker form-row" style="align-items:flex-end;"
+         data-courses='{{ courses_json | tojson }}'
+         data-base-url="{{ url_for('faculty.mark_attendance') }}"
+         data-selected="{{ selected_course }}">
       <div class="form-group" style="margin-bottom:0; flex:2;">
-        <label class="form-label" for="course_id">Course</label>
-        <select class="form-input course-selector" id="course_id" name="course_id" required
-                data-base-url="{{ url_for('faculty.mark_attendance') }}">
-          <option value="">Select a course</option>
-          {% for course in courses %}
-            <option value="{{ course.course_id }}" {% if selected_course == course.course_id %}selected{% endif %}>
-              {{ course.course_code }} — {{ course.course_name }}
-            </option>
-          {% endfor %}
-        </select>
+        <label class="form-label" for="course_code_sel">Course</label>
+        <select class="form-input course-code-select" id="course_code_sel"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:0; flex:1;">
+        <label class="form-label">Section</label>
+        <select class="form-input section-select" name="course_id" required></select>
       </div>
       <div class="form-group" style="margin-bottom:0;">
         <label class="form-label" for="attendance_date">Date</label>
@@ -98,7 +102,7 @@
       <div class="empty-state">
         <div class="empty-state-icon">✅</div>
         <h3>No students to mark</h3>
-        <p>Select a course above to see enrolled students.</p>
+        <p>Select a course and section above to see enrolled students.</p>
       </div>
     </div>
   {% endif %}

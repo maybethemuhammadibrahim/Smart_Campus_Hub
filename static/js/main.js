@@ -103,7 +103,86 @@
       });
     }
 
-    /* ---------- Course Selector Redirect ---------- */
+    /* ---------- Course + Section Cascading Selectors ---------- */
+    var coursePickers = document.querySelectorAll('.course-picker');
+    coursePickers.forEach(function (picker) {
+      var courseSel = picker.querySelector('.course-code-select');
+      var sectionSel = picker.querySelector('.section-select');
+      if (!courseSel || !sectionSel) return;
+
+      var allCourses = JSON.parse(picker.getAttribute('data-courses') || '[]');
+      var baseUrl = picker.getAttribute('data-base-url') || '';
+      var selectedId = parseInt(picker.getAttribute('data-selected')) || 0;
+
+      // Get unique course codes
+      var uniqueCodes = [];
+      var codeNames = {};
+      allCourses.forEach(function (c) {
+        if (uniqueCodes.indexOf(c.code) === -1) {
+          uniqueCodes.push(c.code);
+          codeNames[c.code] = c.name;
+        }
+      });
+
+      // Find the currently selected course code
+      var selectedCode = '';
+      allCourses.forEach(function (c) {
+        if (c.id === selectedId) selectedCode = c.code;
+      });
+      if (!selectedCode && uniqueCodes.length > 0) selectedCode = uniqueCodes[0];
+
+      // Populate course dropdown
+      courseSel.innerHTML = '';
+      uniqueCodes.forEach(function (code) {
+        var opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = code + ' \u2014 ' + codeNames[code];
+        if (code === selectedCode) opt.selected = true;
+        courseSel.appendChild(opt);
+      });
+
+      // Populate sections for selected course
+      function populateSections(code, doNavigate) {
+        sectionSel.innerHTML = '';
+        var sections = allCourses.filter(function (c) { return c.code === code; });
+        sections.forEach(function (s) {
+          var opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = 'Section ' + s.section;
+          if (s.id === selectedId) opt.selected = true;
+          sectionSel.appendChild(opt);
+        });
+        // Never truly disable — disabled selects don't submit values.
+        // Use a CSS class for the muted look instead.
+        if (sections.length <= 1) {
+          sectionSel.classList.add('select-locked');
+        } else {
+          sectionSel.classList.remove('select-locked');
+        }
+
+        // Auto-navigate when course changes (not on init)
+        if (doNavigate && baseUrl && sections.length > 0) {
+          window.location.href = baseUrl + '/' + sections[0].id;
+        }
+      }
+
+      // Initialize sections (no navigation)
+      populateSections(selectedCode, false);
+
+      // Course change → repopulate sections and navigate
+      courseSel.addEventListener('change', function () {
+        populateSections(this.value, true);
+      });
+
+      // Section change → navigate
+      sectionSel.addEventListener('change', function () {
+        if (this.value && baseUrl) {
+          window.location.href = baseUrl + '/' + this.value;
+        }
+      });
+    });
+
+    /* ---------- Legacy single course selector (fallback) ---------- */
     var courseSelectors = document.querySelectorAll('.course-selector');
     courseSelectors.forEach(function (sel) {
       sel.addEventListener('change', function () {

@@ -12,18 +12,24 @@
   </div>
 </div>
 
-<!-- Course Selector -->
+<!-- Course + Section Selector -->
 {% if courses %}
+{% set courses_json = [] %}
+{% for c in courses %}
+  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section|default('A')}) %}
+{% endfor %}
 <div class="card card-static section-mb" style="padding: 14px 20px;">
-  <div class="form-row" style="align-items:center;">
+  <div class="course-picker form-row" style="align-items:flex-end;"
+       data-courses='{{ courses_json | tojson }}'
+       data-base-url="{{ url_for('faculty.roster') }}"
+       data-selected="{{ selected_course }}">
+    <div class="form-group" style="margin-bottom:0; flex:2;">
+      <label class="form-label">Course</label>
+      <select class="form-input course-code-select"></select>
+    </div>
     <div class="form-group" style="margin-bottom:0; flex:1;">
-      <select class="form-input course-selector" data-base-url="{{ url_for('faculty.roster') }}" id="rosterCourseSelect">
-        {% for c in courses %}
-          <option value="{{ c.course_id }}" {% if selected_course == c.course_id %}selected{% endif %}>
-            {{ c.course_code }} — {{ c.course_name }}
-          </option>
-        {% endfor %}
-      </select>
+      <label class="form-label">Section</label>
+      <select class="form-input section-select"></select>
     </div>
   </div>
 </div>
