@@ -2,20 +2,23 @@
 {% block title %}{{ semester.name }} — Analytics{% endblock %}
 
 {% block content %}
-<!-- Welcome Banner -->
-<div class="welcome-banner">
-  <h1>📊 {{ semester.name }} Analytics</h1>
-  <p>{{ semester.start_date.strftime('%B %d, %Y') if semester.start_date else '' }} — {{ semester.end_date.strftime('%B %d, %Y') if semester.end_date else '' }}</p>
-  {% if semester.is_active %}
-    <span class="designation-badge">🟢 Active Semester</span>
-  {% else %}
-    <span class="designation-badge">⏸️ Inactive</span>
-  {% endif %}
+<!-- Back Link -->
+<div style="margin-bottom: 16px;">
+  <a href="{{ url_for('admin.semesters') }}" style="color: var(--text-muted); font-size: 13px; font-weight: 600;">← Back to Semesters</a>
 </div>
 
-<!-- Back Link -->
-<div class="section-mb">
-  <a href="{{ url_for('admin.semesters') }}" class="btn btn-outline btn-sm">← Back to Semesters</a>
+<div class="flex-between page-header">
+  <div>
+    <h1 class="page-title">📊 {{ semester.name }} Analytics</h1>
+    <p class="page-subtitle">{{ semester.start_date.strftime('%B %d, %Y') if semester.start_date else '' }} — {{ semester.end_date.strftime('%B %d, %Y') if semester.end_date else '' }}</p>
+  </div>
+  <div>
+    {% if semester.is_active %}
+      <span class="badge badge-success" style="font-size: 13px; padding: 6px 12px;">🟢 Active Semester</span>
+    {% else %}
+      <span class="badge badge-warning" style="font-size: 13px; padding: 6px 12px;">⏸️ Inactive</span>
+    {% endif %}
+  </div>
 </div>
 
 <!-- Overview Stat Cards -->

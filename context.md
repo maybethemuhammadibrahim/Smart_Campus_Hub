@@ -158,7 +158,8 @@ LEFT JOIN semesters sm ON cs.semester_id  = sm.semester_id
 | DB-level governance (CHECK, triggers, SPs, views) | KEEP |
 | Connection pooling in app layer (size 5 baseline) | KEEP |
 | Session-based auth + decorator RBAC | KEEP |
-| Faculty ownership guard via `course_sections` | ENFORCED (updated) |
+| Faculty ownership guard via `course_sections` | ENFORCED (updated) — Faculty can teach multiple sections of the same course. |
+| Faculty Workload Limit | ENFORCED (6 sections/sem max default). Edit via `config.py:MAX_COURSES_PER_FACULTY` + `db/triggers.sql` |
 | Stored procedures for enrollment and GPA workflows | KEEP |
 | Audit logging for grade/attendance mutations | KEEP (non-negotiable) |
 | `courses` as catalog only; offering data in `course_sections` | ENFORCED |

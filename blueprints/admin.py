@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, current_app
 from werkzeug.security import generate_password_hash
 
 from db_connector import execute_query
@@ -631,14 +631,15 @@ def assign_faculty():
 		flash('Course, semester, and faculty are required.', 'danger')
 		return _redirect_back('admin.courses')
 
-	# Check if this faculty is already assigned to this course+semester
-	already = execute_query(
-		"""SELECT section_id FROM course_sections
-		   WHERE course_id = %s AND semester_id = %s AND faculty_id = %s""",
-		(course_id, semester_id, faculty_id),
+	# Check faculty workload limit
+	max_courses = current_app.config['MAX_COURSES_PER_FACULTY']
+	workload = execute_query(
+		"""SELECT COUNT(*) as assigned_count FROM course_sections
+		   WHERE faculty_id = %s AND semester_id = %s""",
+		(faculty_id, semester_id)
 	)
-	if already:
-		flash('This faculty member is already assigned to this course.', 'warning')
+	if workload and workload[0]['assigned_count'] >= max_courses:
+		flash(f'Cannot assign! Faculty has reached the maximum workload limit of {max_courses} courses for this semester.', 'danger')
 		return _redirect_back('admin.courses')
 
 	# Check for an unassigned section first — fill it instead of creating a new one

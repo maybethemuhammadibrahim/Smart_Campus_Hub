@@ -2,10 +2,12 @@
 {% block title %}Manage Semesters{% endblock %}
 
 {% block content %}
-<!-- Welcome Banner -->
-<div class="welcome-banner">
-  <h1>📅 Semester Management</h1>
-  <p>Create, edit, and analyze academic semesters — all from one place</p>
+<div class="flex-between section-mb">
+  <div>
+    <h1 class="page-title" style="margin-bottom:0;">Manage Semesters</h1>
+    <p class="page-subtitle" style="margin-bottom:0;">Create, edit, and analyze academic semesters</p>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('createSemesterModal')">➕ Create Semester</button>
 </div>
 
 <!-- Summary Stats -->
@@ -26,13 +28,6 @@
   </div>
 </div>
 
-<!-- Actions Bar -->
-<div class="flex-between section-mb">
-  <div>
-    <h2 class="page-title" style="margin-bottom:0; font-size:20px;">All Semesters</h2>
-  </div>
-  <button class="btn btn-primary" onclick="openModal('createSemesterModal')">➕ Create Semester</button>
-</div>
 
 {% if semesters %}
 <div class="semester-card-grid">

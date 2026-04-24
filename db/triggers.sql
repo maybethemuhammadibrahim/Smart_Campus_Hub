@@ -111,4 +111,44 @@ BEGIN
     END IF;
 END$$
 
+-- ============================================================
+-- TRIGGER 8: Prevent assigning a faculty member more than 6 courses
+-- The limit must be updated here if config.py:MAX_COURSES_PER_FACULTY is changed.
+-- ============================================================
+CREATE TRIGGER trg_faculty_load_insert
+BEFORE INSERT ON course_sections
+FOR EACH ROW
+BEGIN
+    DECLARE v_count INT;
+    IF NEW.faculty_id IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_count
+        FROM course_sections
+        WHERE faculty_id = NEW.faculty_id
+          AND semester_id = NEW.semester_id;
+        
+        IF v_count >= 6 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Faculty cannot be assigned more than 6 sections per semester.';
+        END IF;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_faculty_load_update
+BEFORE UPDATE ON course_sections
+FOR EACH ROW
+BEGIN
+    DECLARE v_count INT;
+    IF NEW.faculty_id IS NOT NULL AND NEW.faculty_id != OLD.faculty_id THEN
+        SELECT COUNT(*) INTO v_count
+        FROM course_sections
+        WHERE faculty_id = NEW.faculty_id
+          AND semester_id = NEW.semester_id;
+        
+        IF v_count >= 6 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Faculty cannot be assigned more than 6 sections per semester.';
+        END IF;
+    END IF;
+END$$
+
 DELIMITER ;
