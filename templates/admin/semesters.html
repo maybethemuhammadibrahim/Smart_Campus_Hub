@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Manage Semesters{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <h1>📅 Semester Management</h1>
+  <p>Create, edit, and analyze academic semesters — all from one place</p>
+</div>
+
+<!-- Summary Stats -->
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-card-icon blue">📋</div>
+    <div class="stat-card-content">
+      <div class="stat-number blue" data-count="{{ total_semesters }}">0</div>
+      <div class="stat-label">Total Semesters</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card-icon emerald">✅</div>
+    <div class="stat-card-content">
+      <div class="stat-number emerald" data-count="{{ active_count }}">0</div>
+      <div class="stat-label">Active Semesters</div>
+    </div>
+  </div>
+</div>
+
+<!-- Actions Bar -->
+<div class="flex-between section-mb">
+  <div>
+    <h2 class="page-title" style="margin-bottom:0; font-size:20px;">All Semesters</h2>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('createSemesterModal')">➕ Create Semester</button>
+</div>
+
+{% if semesters %}
+<div class="semester-card-grid">
+  {% for sm in semesters %}
+  <div class="semester-card {% if sm.is_active %}semester-active{% endif %}">
+    <div class="semester-card-top">
+      <div class="semester-card-name">{{ sm.name }}</div>
+      {% if sm.is_active %}
+        <span class="badge badge-success">Active</span>
+      {% else %}
+        <span class="badge badge-warning">Inactive</span>
+      {% endif %}
+    </div>
+
+    <div class="semester-card-dates">
+      <span>📅 {{ sm.start_date.strftime('%b %d, %Y') if sm.start_date else '—' }}</span>
+      <span class="semester-date-sep">→</span>
+      <span>{{ sm.end_date.strftime('%b %d, %Y') if sm.end_date else '—' }}</span>
+    </div>
+
+    <div class="semester-card-stats">
+      <div class="semester-mini-stat">
+        <span class="semester-mini-value">{{ sm.section_count }}</span>
+        <span class="semester-mini-label">Sections</span>
+      </div>
+      <div class="semester-mini-stat">
+        <span class="semester-mini-value">{{ sm.enrollment_count }}</span>
+        <span class="semester-mini-label">Enrollments</span>
+      </div>
+      <div class="semester-mini-stat">
+        <span class="semester-mini-value">{{ sm.course_count }}</span>
+        <span class="semester-mini-label">Courses</span>
+      </div>
+      <div class="semester-mini-stat">
+        <span class="semester-mini-value">{{ sm.faculty_count }}</span>
+        <span class="semester-mini-label">Faculty</span>
+      </div>
+    </div>
+
+    <div class="semester-card-actions">
+      <a href="{{ url_for('admin.semester_stats', semester_id=sm.semester_id) }}" class="btn btn-primary btn-sm">📊 View Stats</a>
+      <button class="btn btn-outline btn-sm"
+        onclick="openEditSemesterModal({{ sm.semester_id }}, '{{ sm.name }}', '{{ sm.start_date }}', '{{ sm.end_date }}', {{ 1 if sm.is_active else 0 }})">✏️ Edit</button>
+      <form method="POST" action="{{ url_for('admin.delete_semester', semester_id=sm.semester_id) }}"
+        style="display:inline;" data-confirm="Delete semester &quot;{{ sm.name }}&quot;? This will also remove all associated course sections, enrollments, grades, and attendance records. This action cannot be undone.">
+        <button type="submit" class="btn btn-outline btn-sm" style="color: var(--accent-rose); border-color: rgba(239,68,68,0.3);">🗑️ Delete</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card card-static">
+  <div class="empty-state">
+    <div class="empty-state-icon">📅</div>
+    <h3>No semesters found</h3>
+    <p>Click "Create Semester" to add your first academic term.</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Create Semester Modal -->
+<div class="modal-overlay" id="createSemesterModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Create New Semester</h3>
+      <button class="modal-close" onclick="closeModal('createSemesterModal')">&times;</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin.create_semester') }}">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="sem_name">Semester Name</label>
+          <input type="text" class="form-input" id="sem_name" name="name" placeholder="e.g. Fall 2026" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="sem_start_date">Start Date</label>
+          <input type="date" class="form-input" id="sem_start_date" name="start_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="sem_end_date">End Date</label>
+          <input type="date" class="form-input" id="sem_end_date" name="end_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="sem_is_active">Status</label>
+          <select class="form-input" id="sem_is_active" name="is_active">
+            <option value="0">Inactive</option>
+            <option value="1">Active</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('createSemesterModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Semester</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Semester Modal -->
+<div class="modal-overlay" id="editSemesterModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Edit Semester</h3>
+      <button class="modal-close" onclick="closeModal('editSemesterModal')">&times;</button>
+    </div>
+    <form method="POST" id="editSemesterForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="edit_sem_name">Semester Name</label>
+          <input type="text" class="form-input" id="edit_sem_name" name="name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_sem_start_date">Start Date</label>
+          <input type="date" class="form-input" id="edit_sem_start_date" name="start_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_sem_end_date">End Date</label>
+          <input type="date" class="form-input" id="edit_sem_end_date" name="end_date" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="edit_sem_is_active">Status</label>
+          <select class="form-input" id="edit_sem_is_active" name="is_active">
+            <option value="0">Inactive</option>
+            <option value="1">Active</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal('editSemesterModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditSemesterModal(semesterId, name, startDate, endDate, isActive) {
+    document.getElementById('edit_sem_name').value = name;
+    // Format dates for date input (YYYY-MM-DD)
+    document.getElementById('edit_sem_start_date').value = startDate.split(' ')[0];
+    document.getElementById('edit_sem_end_date').value = endDate.split(' ')[0];
+    document.getElementById('edit_sem_is_active').value = isActive;
+
+    var form = document.getElementById('editSemesterForm');
+    form.action = '/admin/semesters/' + semesterId + '/update';
+
+    openModal('editSemesterModal');
+  }
+</script>
+{% endblock %}

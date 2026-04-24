@@ -1559,6 +1559,246 @@ table .form-input {
   50% { opacity: 0.4; }
 }
 
+/* ---------- Semester Card Grid ---------- */
+.semester-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.semester-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+  padding: 24px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.semester-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--gradient-blue);
+  border-radius: 14px 0 0 14px;
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.semester-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: rgba(67, 97, 238, 0.2);
+}
+
+.semester-card:hover::before {
+  opacity: 1;
+}
+
+.semester-active::before {
+  background: var(--gradient-emerald);
+  opacity: 1;
+}
+
+.semester-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.semester-card-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.3px;
+}
+
+.semester-card-dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.semester-date-sep {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+
+.semester-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.semester-mini-stat {
+  text-align: center;
+  padding: 8px 4px;
+  background: var(--bg-hover);
+  border-radius: 8px;
+}
+
+.semester-mini-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--accent-blue);
+  line-height: 1.2;
+}
+
+.semester-mini-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 2px;
+}
+
+.semester-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* ---------- Enrollment Status Bar ---------- */
+.enrollment-status-bar-wrap {
+  display: flex;
+  height: 36px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--bg-hover);
+}
+
+.enrollment-status-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  min-width: 32px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.es-active    { background: var(--gradient-emerald); }
+.es-completed { background: var(--gradient-blue); }
+.es-dropped   { background: var(--gradient-rose); }
+
+.enrollment-status-legend {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.es-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.es-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.es-dot-active    { background: var(--accent-emerald); }
+.es-dot-completed { background: var(--accent-blue); }
+.es-dot-dropped   { background: var(--accent-rose); }
+
+/* ---------- Top Students List ---------- */
+.top-students-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.top-student-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--bg-hover);
+  transition: all 0.2s ease;
+}
+
+.top-student-card:hover {
+  background: var(--accent-blue-bg);
+}
+
+.top-student-rank {
+  font-size: 22px;
+  width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.top-student-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-student-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-student-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.top-student-gpa {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.top-student-gpa-value {
+  display: block;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent-emerald);
+  line-height: 1.1;
+}
+
+.top-student-gpa-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ---------- Print ---------- */
 @media print {
   .sidebar,
@@ -1597,6 +1837,62 @@ table .form-input {
   table {
     font-size: 12px;
   }
+}
+
+/* ---------- Assign Faculty Context Card ---------- */
+.assign-context-card {
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+}
+
+.assign-context-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.assign-context-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 2px;
+}
+
+/* ---------- Faculty Assignment Rows (Edit Modal) ---------- */
+.faculty-assignment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.faculty-assignment-row:hover {
+  border-color: var(--accent-blue);
+  background: var(--accent-blue-bg);
+}
+
+.faculty-assignment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.faculty-assignment-meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
 /* ---------- Responsive (≤ 768px) ---------- */
@@ -1650,6 +1946,14 @@ table .form-input {
   }
 
   .summary-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .semester-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .semester-card-stats {
     grid-template-columns: repeat(2, 1fr);
   }
 }
