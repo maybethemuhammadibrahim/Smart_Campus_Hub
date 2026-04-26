@@ -7,12 +7,32 @@
   <p class="page-subtitle">Track your attendance across all enrolled courses</p>
 </div>
 
+{% if semesters %}
+<div class="card card-static section-mb" style="padding: 14px 20px;">
+  <div class="form-row" style="align-items:flex-end;">
+    <div class="form-group" style="margin-bottom:0; flex:1; max-width:320px;">
+      <label class="form-label">Semester</label>
+      <select class="form-input"
+              data-url="{{ url_for('student.attendance') }}"
+              onchange="window.location=this.dataset.url+(this.value?'?semester='+encodeURIComponent(this.value):'')">
+        <option value="">All Semesters</option>
+        {% for s in semesters %}
+          <option value="{{ s }}" {% if selected_semester == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if records %}
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th>Course Name</th>
+          <th>Section</th>
+          <th>Semester</th>
           <th>Total Classes</th>
           <th>Attended</th>
           <th>Attendance %</th>
@@ -24,6 +44,8 @@
         {% set pct = record.attendance_percentage if record.attendance_percentage is not none else 0 %}
         <tr>
           <td style="font-weight:600;">{{ record.course_name }}</td>
+          <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ record.section_code if record.section_code else '—' }}</span></td>
+          <td><span class="badge badge-purple">{{ record.semester_name if record.semester_name else '—' }}</span></td>
           <td>{{ record.total_classes if record.total_classes else 0 }}</td>
           <td>{{ record.classes_attended if record.classes_attended else 0 }}</td>
           <td>

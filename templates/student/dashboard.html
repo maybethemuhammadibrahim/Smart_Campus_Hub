@@ -71,8 +71,10 @@
         <thead>
           <tr>
             <th>Course Code</th>
+            <th>Section</th>
             <th>Course Name</th>
             <th>Credit Hours</th>
+            <th>Semester</th>
             <th>Faculty</th>
             <th>Status</th>
           </tr>
@@ -81,8 +83,10 @@
           {% for course in enrolled %}
           <tr>
             <td><span class="badge badge-info">{{ course.course_code }}</span></td>
+            <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ course.section_code if course.section_code else 'A' }}</span></td>
             <td>{{ course.course_name }}</td>
             <td>{{ course.credit_hours if course.credit_hours else '—' }}</td>
+            <td><span class="badge badge-purple">{{ course.semester_name if course.semester_name else '—' }}</span></td>
             <td>{{ course.faculty_name if course.faculty_name else '—' }}</td>
             <td><span class="badge badge-success">Active</span></td>
           </tr>

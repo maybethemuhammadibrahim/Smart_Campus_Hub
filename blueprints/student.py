@@ -17,11 +17,13 @@ def dashboard():
     # Fixed: JOIN through course_sections to reach courses + faculty
     enrolled = execute_query(
         """SELECT c.course_name, c.course_code, c.credit_hours,
+                  cs.section_code, sm.name AS semester_name,
                   CONCAT(f.first_name, ' ', f.last_name) AS faculty_name
            FROM enrollments e
            JOIN course_sections cs ON e.section_id = cs.section_id
            JOIN courses c ON cs.course_id = c.course_id
            LEFT JOIN faculty f ON cs.faculty_id = f.faculty_id
+           LEFT JOIN semesters sm ON cs.semester_id = sm.semester_id
            WHERE e.student_id = %s AND e.status = 'active'
            ORDER BY c.course_code""",
         (sid,),
@@ -97,8 +99,33 @@ def enroll(section_id):
 @role_required('student')
 def attendance():
     sid = session['entity_id']
-    data = execute_query("SELECT * FROM v_attendance_summary WHERE student_id=%s", (sid,))
-    return render_template('student/attendance.html', records=data)
+    selected_semester = request.args.get('semester', '').strip()
+
+    # Distinct semesters this student has attendance records in
+    semesters = execute_query(
+        "SELECT DISTINCT semester_name FROM v_attendance_summary WHERE student_id=%s ORDER BY semester_name",
+        (sid,),
+    )
+    semester_list = [r['semester_name'] for r in semesters if r.get('semester_name')]
+
+    # Fetch attendance — filtered if semester selected, full otherwise
+    if selected_semester:
+        data = execute_query(
+            "SELECT * FROM v_attendance_summary WHERE student_id=%s AND semester_name=%s",
+            (sid, selected_semester),
+        )
+    else:
+        data = execute_query(
+            "SELECT * FROM v_attendance_summary WHERE student_id=%s",
+            (sid,),
+        )
+
+    return render_template(
+        'student/attendance.html',
+        records=data,
+        semesters=semester_list,
+        selected_semester=selected_semester,
+    )
 
 @student_bp.route('/grades')
 @login_required
