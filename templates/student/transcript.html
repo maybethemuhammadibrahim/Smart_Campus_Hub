@@ -25,11 +25,12 @@
     <div class="info-item-value">{{ student.batch_year if student.batch_year else '—' }}</div>
   </div>
   <div>
-    <div class="info-item-label">Email</div>
-    <div class="info-item-value">{{ student.email if student.email else '—' }}</div>
+    <div class="info-item-label">CGPA</div>
+    <div class="info-item-value" style="font-weight:800; color:var(--accent-blue);">{{ cgpa if cgpa else '0.00' }}</div>
   </div>
 </div>
 
+{% set ns = namespace(cumulative_credits=0) %}
 {% if grouped_transcript %}
   {% for block in grouped_transcript %}
   <div class="card card-static section-mb">
@@ -82,11 +83,18 @@
         </tbody>
       </table>
     </div>
+    {% set ns.cumulative_credits = ns.cumulative_credits + block.summary.total_credits %}
     <div class="transcript-semester-summary">
       <div class="transcript-summary-item">
         <span class="transcript-summary-label">Semester Credits</span>
         <span class="transcript-summary-value">{{ block.summary.total_credits }}</span>
       </div>
+      <div class="transcript-summary-divider"></div>
+      <div class="transcript-summary-item">
+        <span class="transcript-summary-label">Total Credits</span>
+        <span class="transcript-summary-value">{{ ns.cumulative_credits }}</span>
+      </div>
+      <div class="transcript-summary-divider"></div>
       <div class="transcript-summary-item">
         <span class="transcript-summary-label">Semester GPA</span>
         <span class="transcript-summary-value">{{ block.summary.sgpa if block.summary.sgpa is not none else '—' }}</span>
@@ -103,9 +111,4 @@
     </div>
   </div>
 {% endif %}
-
-<div class="cgpa-card">
-  <div class="cgpa-label">Cumulative GPA</div>
-  <div class="cgpa-value">{{ cgpa if cgpa else '0.00' }}</div>
-</div>
 {% endblock %}

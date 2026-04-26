@@ -27,7 +27,7 @@ A full-stack **Academic Management System** built with **Flask + MySQL** for man
 
 | Portal | Users | Core Features |
 |--------|-------|---------------|
-| **Student Portal** | Students | View courses, enroll, check grades, attendance, transcript |
+| **Student Portal** | Students | View courses, enroll, check grades/attendance with semester filters, semester-grouped transcript |
 | **Faculty Portal** | Professors | Manage courses, mark attendance, enter grades, view analytics |
 | **Admin Portal** | Administrators | Manage users, courses, enrollment reports, GPA distribution |
 
@@ -192,11 +192,11 @@ enrollments (1) ── (1) grades
 - **Role Routing** — Automatically redirects to the correct portal after login
 
 ### 2. Student Portal (`student.py`)
-- Dashboard with enrolled courses and profile info
+- Dashboard with enrolled courses (section + semester badges) and profile info
 - Browse and enroll in available courses (via stored procedure)
-- View attendance percentage per course (via `v_attendance_summary` view)
-- View grades and CGPA
-- Generate full academic transcript (via `v_student_transcript` view)
+- View attendance percentage per course with **semester dropdown filter** (via `v_attendance_summary` view)
+- View grades with **semester dropdown filter**; CGPA always cumulative (via `v_student_cgpa` view)
+- **Semester-grouped academic transcript** with per-semester summary (Semester Credits | Total Credits | Semester GPA)
 
 ### 3. Faculty Portal (`faculty.py`) ⭐
 - **13 routes** covering course management, grading, attendance, analytics, and profile
@@ -304,9 +304,11 @@ The Faculty Portal is the most feature-rich module with **13 routes** and **8 te
 | GET | `/student/dashboard` | Student dashboard |
 | GET | `/student/courses` | Available courses |
 | POST | `/student/enroll/<id>` | Enroll in course |
-| GET | `/student/attendance` | Attendance summary |
-| GET | `/student/grades` | Grades + CGPA |
-| GET | `/student/transcript` | Full transcript |
+| GET | `/student/attendance` | Attendance summary (supports `?semester=`) |
+| GET | `/student/grades` | Grades + CGPA (supports `?semester=`) |
+| GET | `/student/transcript` | Semester-grouped transcript |
+| GET | `/student/profile` | Student profile |
+| POST | `/student/change-password` | Change password |
 
 ### Admin Routes
 

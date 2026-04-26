@@ -171,6 +171,17 @@ LEFT JOIN semesters sm ON cs.semester_id  = sm.semester_id
 ## 7. Canonical Routes
 
 **Auth:** `/login`, `/logout`
-**Student:** `/student/dashboard`, `/student/courses`, `/student/enroll/<id>`, `/student/attendance`, `/student/grades`, `/student/transcript`
+**Student:** `/student/dashboard`, `/student/courses`, `/student/enroll/<id>`, `/student/attendance`, `/student/grades`, `/student/transcript`, `/student/profile`, `/student/change-password`
 **Faculty:** `/faculty/dashboard`, `/faculty/my-courses`, `/faculty/roster/<id>`, `/faculty/attendance/<id>`, `/faculty/attendance/submit`, `/faculty/attendance/history/<id>`, `/faculty/grades/<id>`, `/faculty/grades/save`, `/faculty/analytics/<id>`, `/faculty/profile`, `/faculty/profile/update`, `/faculty/api/course-students/<id>`
 **Admin:** `/admin/dashboard`, `/admin/students`, `/admin/students/add`, `/admin/faculty`, `/admin/faculty/add`, `/admin/courses`, `/admin/courses/create`, `/admin/reports`
+
+### Student Route Contracts (post-Phase 1/2/3)
+
+| Route | Query Params | Behavior |
+|-------|-------------|----------|
+| `/student/attendance` | `?semester=<name>` | Filters `v_attendance_summary` by `semester_name`. Empty/missing = all semesters. Invalid = empty table (no crash). |
+| `/student/grades` | `?semester=<name>` | Filters `v_student_transcript` by `semester_name`. CGPA card always shows cumulative (unfiltered). |
+| `/student/transcript` | — | Grouped by `semester_name` into per-semester cards. Each card shows table + summary (Semester Credits \| Total Credits \| Semester GPA). CGPA shown in top info bar (not bottom). |
+
+- All student pages display **Section** and **Semester** badges (`badge badge-purple`) for consistency with faculty/admin UI.
+- Transcript info bar shows: Student Name, Program, Batch Year, CGPA. Email removed.

@@ -1151,6 +1151,13 @@ select.form-input {
   color: var(--accent-blue);
 }
 
+.transcript-summary-divider {
+  width: 1.5px;
+  height: 24px;
+  background: var(--border-color);
+  align-self: center;
+}
+
 /* ---------- Course Card Specific ---------- */
 .course-card-code {
   font-size: 11px;

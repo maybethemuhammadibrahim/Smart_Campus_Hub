@@ -81,20 +81,28 @@
 All fixes applied in the first migration run.
 
 ### Required File Update Checklist
-- [x] `blueprints/student.py` — all 5 routes fixed
-- [x] `templates/student/dashboard.html` — `student.cgpa` → `cgpa` variable
-- [x] `templates/student/transcript.html` — `row.semester` → `row.semester_name`; `student.cgpa` → `cgpa`
-- [x] `templates/student/grades.html` — no change needed
-- [x] `templates/student/courses.html` — no change needed
-- [x] `templates/student/attendance.html` — no change needed
+- [x] `blueprints/student.py` — all routes fixed; attendance + grades routes support `?semester=` filter; transcript route groups by semester with SGPA
+- [x] `templates/student/dashboard.html` — `student.cgpa` → `cgpa` variable; Section + Semester columns added
+- [x] `templates/student/courses.html` — Section column added
+- [x] `templates/student/attendance.html` — Section + Semester columns added; semester dropdown filter
+- [x] `templates/student/grades.html` — Section + Semester columns added; semester dropdown filter; CGPA stays cumulative
+- [x] `templates/student/transcript.html` — semester-grouped cards with per-semester table + summary (Semester Credits | Total Credits | Semester GPA); CGPA in top info bar; Email removed; bottom CGPA card removed
+
+### Student UI Phases — Completion Status
+
+| Phase | Status | Summary |
+|-------|--------|----------|
+| Phase 1 — Consistency | ✅ Done | Section + Semester badge columns added to all 5 student pages |
+| Phase 2 — Semester Filters | ✅ Done | `?semester=` dropdown on attendance + grades; parameterized SQL; invalid semester → graceful empty state |
+| Phase 3 — Transcript Grouping | ✅ Done | Semester-grouped cards; per-semester SGPA summary; cumulative total credits; CGPA moved to info bar |
 
 ### Definition of Done — STUDENT ✅
-- [x] `/student/dashboard` loads; enrolled table shows faculty name
-- [x] `/student/courses` shows available sections with semester + seats
+- [x] `/student/dashboard` loads; enrolled table shows section, semester, faculty; CGPA card shows value
+- [x] `/student/courses` shows available sections with section column, semester, seats
 - [x] Enroll flow completes; SP called with `section_id`
-- [x] `/student/attendance` shows attendance per section
-- [x] `/student/grades` shows computed CGPA
-- [x] `/student/transcript` shows `semester_name` column; CGPA footer correct
+- [x] `/student/attendance` shows attendance per section with section/semester badges; semester dropdown filters results
+- [x] `/student/grades` shows computed CGPA (cumulative); semester dropdown filters grade table
+- [x] `/student/transcript` groups by semester; each card has table + summary row; CGPA in top info bar
 
 ---
 
@@ -108,12 +116,15 @@ Run these before any merge or deployment.
 - [ ] Verify `users` table column is `password` (not `password_hash`) — auth still works
 
 ### Student
-- [ ] `/student/dashboard` — enrolled courses list with faculty name; CGPA card shows value
-- [ ] `/student/courses` — available sections visible; seats_left correct; semester shown
+- [ ] `/student/dashboard` — enrolled courses list with section, semester, faculty; CGPA card shows value
+- [ ] `/student/courses` — available sections visible; section badge, seats_left correct; semester shown
 - [ ] Enroll in a section → flash "Enrollment successful." → section disappears from available list
-- [ ] `/student/attendance` — attendance % per section renders
-- [ ] `/student/grades` — letter grades table + computed CGPA card
-- [ ] `/student/transcript` — `Semester` column shows semester name (e.g. "Fall 2026")
+- [ ] `/student/attendance` — attendance % per section with section/semester badges; semester dropdown filters correctly
+- [ ] `/student/attendance?semester=NonExistent` — graceful empty state, no 500
+- [ ] `/student/grades` — letter grades table + semester dropdown filter; CGPA card shows cumulative (unchanged by filter)
+- [ ] `/student/grades?semester=NonExistent` — graceful empty state, no 500
+- [ ] `/student/transcript` — grouped by semester; each card has summary row (Semester Credits | Total Credits | Semester GPA); CGPA in top info bar; no bottom CGPA box
+- [ ] Print button on transcript works
 
 ### Faculty
 - [ ] `/faculty/dashboard` — stat cards: courses, students, avg attendance, avg marks
