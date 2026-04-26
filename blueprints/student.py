@@ -132,11 +132,38 @@ def attendance():
 @role_required('student')
 def grades():
     sid = session['entity_id']
-    data = execute_query("SELECT * FROM v_student_transcript WHERE student_id=%s", (sid,))
-    # Fixed: cgpa from v_student_cgpa view (no longer a stored column)
+    selected_semester = request.args.get('semester', '').strip()
+
+    # Distinct semesters this student has transcript/grade records in
+    semesters = execute_query(
+        "SELECT DISTINCT semester_name FROM v_student_transcript WHERE student_id=%s ORDER BY semester_name",
+        (sid,),
+    )
+    semester_list = [r['semester_name'] for r in semesters if r.get('semester_name')]
+
+    # Fetch grades — filtered if semester selected, full otherwise
+    if selected_semester:
+        data = execute_query(
+            "SELECT * FROM v_student_transcript WHERE student_id=%s AND semester_name=%s",
+            (sid, selected_semester),
+        )
+    else:
+        data = execute_query(
+            "SELECT * FROM v_student_transcript WHERE student_id=%s",
+            (sid,),
+        )
+
+    # CGPA is always cumulative (not filtered by semester)
     cgpa_row = execute_query("SELECT cgpa FROM v_student_cgpa WHERE student_id=%s", (sid,))
     cgpa = cgpa_row[0]['cgpa'] if cgpa_row else 0.00
-    return render_template('student/grades.html', grades=data, cgpa=cgpa)
+
+    return render_template(
+        'student/grades.html',
+        grades=data,
+        cgpa=cgpa,
+        semesters=semester_list,
+        selected_semester=selected_semester,
+    )
 
 @student_bp.route('/transcript')
 @login_required
