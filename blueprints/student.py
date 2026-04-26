@@ -99,8 +99,33 @@ def enroll(section_id):
 @role_required('student')
 def attendance():
     sid = session['entity_id']
-    data = execute_query("SELECT * FROM v_attendance_summary WHERE student_id=%s", (sid,))
-    return render_template('student/attendance.html', records=data)
+    selected_semester = request.args.get('semester', '').strip()
+
+    # Distinct semesters this student has attendance records in
+    semesters = execute_query(
+        "SELECT DISTINCT semester_name FROM v_attendance_summary WHERE student_id=%s ORDER BY semester_name",
+        (sid,),
+    )
+    semester_list = [r['semester_name'] for r in semesters if r.get('semester_name')]
+
+    # Fetch attendance — filtered if semester selected, full otherwise
+    if selected_semester:
+        data = execute_query(
+            "SELECT * FROM v_attendance_summary WHERE student_id=%s AND semester_name=%s",
+            (sid, selected_semester),
+        )
+    else:
+        data = execute_query(
+            "SELECT * FROM v_attendance_summary WHERE student_id=%s",
+            (sid,),
+        )
+
+    return render_template(
+        'student/attendance.html',
+        records=data,
+        semesters=semester_list,
+        selected_semester=selected_semester,
+    )
 
 @student_bp.route('/grades')
 @login_required

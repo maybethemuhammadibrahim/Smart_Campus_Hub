@@ -7,6 +7,24 @@
   <p class="page-subtitle">Track your attendance across all enrolled courses</p>
 </div>
 
+{% if semesters %}
+<div class="card card-static section-mb" style="padding: 14px 20px;">
+  <div class="form-row" style="align-items:flex-end;">
+    <div class="form-group" style="margin-bottom:0; flex:1; max-width:320px;">
+      <label class="form-label">Semester</label>
+      <select class="form-input"
+              data-url="{{ url_for('student.attendance') }}"
+              onchange="window.location=this.dataset.url+(this.value?'?semester='+encodeURIComponent(this.value):'')">
+        <option value="">All Semesters</option>
+        {% for s in semesters %}
+          <option value="{{ s }}" {% if selected_semester == s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% if records %}
   <div class="table-wrap">
     <table>
