@@ -18,7 +18,9 @@
       <thead>
         <tr>
           <th>Course Code</th>
+          <th>Section</th>
           <th>Course Name</th>
+          <th>Semester</th>
           <th>Marks</th>
           <th>Total</th>
           <th>Letter Grade</th>
@@ -29,7 +31,9 @@
         {% for g in grades %}
         <tr>
           <td><span class="badge badge-info">{{ g.course_code }}</span></td>
+          <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ g.section_code if g.section_code else '—' }}</span></td>
           <td>{{ g.course_name }}</td>
+          <td><span class="badge badge-purple">{{ g.semester_name if g.semester_name else '—' }}</span></td>
           <td>{{ g.marks_obtained if g.marks_obtained is not none else '—' }}</td>
           <td>{{ g.total_marks if g.total_marks is not none else '100' }}</td>
           <td>

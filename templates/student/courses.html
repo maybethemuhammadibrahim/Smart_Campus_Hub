@@ -13,6 +13,7 @@
       <thead>
         <tr>
           <th>Course Code</th>
+          <th>Section</th>
           <th>Course Name</th>
           <th>Credit Hours</th>
           <th>Semester</th>
@@ -25,6 +26,7 @@
         {% for course in courses %}
         <tr>
           <td><span class="badge badge-info">{{ course.course_code }}</span></td>
+          <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ course.section_code if course.section_code else 'A' }}</span></td>
           <td>{{ course.course_name }}</td>
           <td>{{ course.credit_hours }}</td>
           <td><span class="badge badge-purple">{{ course.semester_name if course.semester_name else '—' }}</span></td>

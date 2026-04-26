@@ -36,6 +36,7 @@
       <thead>
         <tr>
           <th>Course Code</th>
+          <th>Section</th>
           <th>Course Name</th>
           <th>Credit Hours</th>
           <th>Marks</th>
@@ -48,6 +49,7 @@
         {% for row in transcript %}
         <tr>
           <td><span class="badge badge-info">{{ row.course_code }}</span></td>
+          <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ row.section_code if row.section_code else '—' }}</span></td>
           <td>{{ row.course_name }}</td>
           <td>{{ row.credit_hours if row.credit_hours else '—' }}</td>
           <td>{{ row.marks_obtained if row.marks_obtained is not none else '—' }}</td>

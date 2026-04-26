@@ -13,6 +13,8 @@
       <thead>
         <tr>
           <th>Course Name</th>
+          <th>Section</th>
+          <th>Semester</th>
           <th>Total Classes</th>
           <th>Attended</th>
           <th>Attendance %</th>
@@ -24,6 +26,8 @@
         {% set pct = record.attendance_percentage if record.attendance_percentage is not none else 0 %}
         <tr>
           <td style="font-weight:600;">{{ record.course_name }}</td>
+          <td><span class="badge badge-purple" style="font-size:10px;">Sec {{ record.section_code if record.section_code else '—' }}</span></td>
+          <td><span class="badge badge-purple">{{ record.semester_name if record.semester_name else '—' }}</span></td>
           <td>{{ record.total_classes if record.total_classes else 0 }}</td>
           <td>{{ record.classes_attended if record.classes_attended else 0 }}</td>
           <td>
