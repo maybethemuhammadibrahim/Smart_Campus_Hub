@@ -1121,6 +1121,36 @@ select.form-input {
   flex-wrap: wrap;
 }
 
+/* ---------- Transcript Semester Summary ---------- */
+.transcript-semester-summary {
+  display: flex;
+  gap: 32px;
+  padding: 14px 20px;
+  border-top: 1.5px solid var(--border-color);
+  background: var(--bg-hover);
+  border-radius: 0 0 12px 12px;
+}
+
+.transcript-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transcript-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.transcript-summary-value {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent-blue);
+}
+
 /* ---------- Course Card Specific ---------- */
 .course-card-code {
   font-size: 11px;

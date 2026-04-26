@@ -170,13 +170,57 @@ def grades():
 @role_required('student')
 def transcript():
     sid = session['entity_id']
-    data = execute_query("SELECT * FROM v_student_transcript WHERE student_id=%s ORDER BY enrolled_at", (sid,))
+    data = execute_query(
+        "SELECT * FROM v_student_transcript WHERE student_id=%s ORDER BY semester_name, course_code",
+        (sid,),
+    )
     student = execute_query("SELECT * FROM students WHERE student_id=%s", (sid,))
+
     # Fixed: cgpa from v_student_cgpa view
     cgpa_row = execute_query("SELECT cgpa FROM v_student_cgpa WHERE student_id=%s", (sid,))
     cgpa = cgpa_row[0]['cgpa'] if cgpa_row else 0.00
-    return render_template('student/transcript.html',
-                           transcript=data, student=student[0], cgpa=cgpa)
+
+    # Group rows by semester_name (simple ordered dict)
+    semester_order = []
+    semester_buckets = {}
+    for row in (data or []):
+        sem = row.get('semester_name') or 'Unknown'
+        if sem not in semester_buckets:
+            semester_order.append(sem)
+            semester_buckets[sem] = []
+        semester_buckets[sem].append(row)
+
+    # Build grouped list with per-semester summary
+    grouped_transcript = []
+    for sem in semester_order:
+        rows = semester_buckets[sem]
+        total_credits = 0
+        gpa_credits = 0
+        weighted_points = 0.0
+        for r in rows:
+            ch = r.get('credit_hours') or 0
+            gp = r.get('grade_points')
+            total_credits += ch
+            if gp is not None:
+                gpa_credits += ch
+                weighted_points += float(gp) * ch
+        sgpa = round(weighted_points / gpa_credits, 2) if gpa_credits > 0 else None
+        grouped_transcript.append({
+            'semester_name': sem,
+            'rows': rows,
+            'summary': {
+                'total_credits': total_credits,
+                'gpa_credits': gpa_credits,
+                'sgpa': sgpa,
+            },
+        })
+
+    return render_template(
+        'student/transcript.html',
+        grouped_transcript=grouped_transcript,
+        student=student[0] if student else {},
+        cgpa=cgpa,
+    )
 
 @student_bp.route('/profile')
 @login_required
