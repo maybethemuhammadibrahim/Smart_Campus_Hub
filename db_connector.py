@@ -43,14 +43,13 @@ def execute_query(query, params=None, fetch=True, many=False):
         conn.close()
 
 def call_procedure(proc_name, args=()):
-    """Calls a stored procedure. Returns OUT params as the last item."""
+    """Calls a stored procedure. Returns the modified args tuple (includes OUT params)."""
     conn   = get_connection()
     cursor = conn.cursor()
     try:
-        cursor.callproc(proc_name, args)
+        result_args = cursor.callproc(proc_name, args)
         conn.commit()
-        result_args = cursor.stored_results()
-        return list(result_args)
+        return result_args
     except MySQLError as e:
         conn.rollback()
         raise e

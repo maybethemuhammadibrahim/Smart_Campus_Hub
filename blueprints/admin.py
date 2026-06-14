@@ -1,5 +1,4 @@
 from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for, current_app
-from werkzeug.security import generate_password_hash
 
 from db_connector import execute_query
 from decorators import login_required, role_required
@@ -488,20 +487,39 @@ def add_student():
 		flash('All required student fields must be filled.', 'danger')
 		return _redirect_back('admin.students')
 
-	user_id = execute_query(
-		"INSERT INTO users (username, password, role, is_active) VALUES (%s, %s, 'student', 1)",
-		(username, generate_password_hash(password)),
-		fetch=False,
-	)
+	# Use a single connection so both INSERTs share one transaction
+	from db_connector import get_connection
+	from mysql.connector import Error as MySQLError
+	conn = get_connection()
+	cursor = conn.cursor(dictionary=True)
+	try:
+		cursor.execute(
+			"INSERT INTO users (username, password, role, is_active) VALUES (%s, %s, 'student', 1)",
+			(username, password),
+		)
+		user_id = cursor.lastrowid
 
-	execute_query(
-		"""INSERT INTO students (user_id, first_name, last_name, email, dob, program, batch_year)
-		   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-		(user_id, first_name, last_name, email, dob if dob else None, program, batch_year),
-		fetch=False,
-	)
-
-	flash('Student added successfully.', 'success')
+		cursor.execute(
+			"""INSERT INTO students (user_id, first_name, last_name, email, dob, program, batch_year)
+			   VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+			(user_id, first_name, last_name, email, dob if dob else None, program, batch_year),
+		)
+		conn.commit()
+		flash('Student added successfully.', 'success')
+	except MySQLError as e:
+		conn.rollback()
+		err = str(e).lower()
+		if 'duplicate' in err and 'username' in err:
+			flash(f'Username "{username}" already exists. Please choose a different username.', 'danger')
+		elif 'duplicate' in err and 'email' in err:
+			flash(f'Email "{email}" already exists. Please use a different email.', 'danger')
+		elif 'duplicate' in err:
+			flash(f'A duplicate entry was found. Please check the username and email.', 'danger')
+		else:
+			flash(f'Error adding student: {e}', 'danger')
+	finally:
+		cursor.close()
+		conn.close()
 	return _redirect_back('admin.students')
 
 
@@ -521,20 +539,39 @@ def add_faculty():
 		flash('All faculty fields are required.', 'danger')
 		return _redirect_back('admin.faculty_list')
 
-	user_id = execute_query(
-		"INSERT INTO users (username, password, role, is_active) VALUES (%s, %s, 'faculty', 1)",
-		(username, generate_password_hash(password)),
-		fetch=False,
-	)
+	# Use a single connection so both INSERTs share one transaction
+	from db_connector import get_connection
+	from mysql.connector import Error as MySQLError
+	conn = get_connection()
+	cursor = conn.cursor(dictionary=True)
+	try:
+		cursor.execute(
+			"INSERT INTO users (username, password, role, is_active) VALUES (%s, %s, 'faculty', 1)",
+			(username, password),
+		)
+		user_id = cursor.lastrowid
 
-	execute_query(
-		"""INSERT INTO faculty (user_id, first_name, last_name, email, department, designation)
-		   VALUES (%s, %s, %s, %s, %s, %s)""",
-		(user_id, first_name, last_name, email, department, designation),
-		fetch=False,
-	)
-
-	flash('Faculty added successfully.', 'success')
+		cursor.execute(
+			"""INSERT INTO faculty (user_id, first_name, last_name, email, department, designation)
+			   VALUES (%s, %s, %s, %s, %s, %s)""",
+			(user_id, first_name, last_name, email, department, designation),
+		)
+		conn.commit()
+		flash('Faculty added successfully.', 'success')
+	except MySQLError as e:
+		conn.rollback()
+		err = str(e).lower()
+		if 'duplicate' in err and 'username' in err:
+			flash(f'Username "{username}" already exists. Please choose a different username.', 'danger')
+		elif 'duplicate' in err and 'email' in err:
+			flash(f'Email "{email}" already exists. Please use a different email.', 'danger')
+		elif 'duplicate' in err:
+			flash(f'A duplicate entry was found. Please check the username and email.', 'danger')
+		else:
+			flash(f'Error adding faculty: {e}', 'danger')
+	finally:
+		cursor.close()
+		conn.close()
 	return _redirect_back('admin.faculty_list')
 
 
@@ -550,11 +587,9 @@ def create_course():
 	max_capacity = request.form.get('max_capacity', '').strip()
 	faculty_id   = request.form.get('faculty_id', '').strip() or None
 
-
 	if not all([course_code, course_name, credit_hours, semester_id, max_capacity]):
 		flash('All course fields are required.', 'danger')
 		return _redirect_back('admin.courses')
-
 
 	# Validate semester exists
 	sem = execute_query(
@@ -565,40 +600,51 @@ def create_course():
 		flash('Selected semester not found.', 'danger')
 		return _redirect_back('admin.courses')
 
-	# Upsert catalog course (course_code must be unique)
-
-	existing = execute_query(
-		"SELECT course_id FROM courses WHERE course_code = %s",
-		(course_code,),
-	)
-	if existing:
-		course_id = existing[0]['course_id']
-	else:
-		course_id = execute_query(
-			"INSERT INTO courses (course_code, course_name, credit_hours) VALUES (%s, %s, %s)",
-			(course_code, course_name, credit_hours),
-			fetch=False,
-		)
-
-
-	# Auto-generate section_code (A, B, C, ...)
-	section_code = _next_section_code(course_id, int(semester_id))
-
+	# Use a single connection for atomic course + section creation
+	from db_connector import get_connection
+	from mysql.connector import Error as MySQLError
+	conn = get_connection()
+	cursor = conn.cursor(dictionary=True)
 	try:
-		execute_query(
+		# Upsert catalog course (course_code must be unique)
+		cursor.execute(
+			"SELECT course_id FROM courses WHERE course_code = %s",
+			(course_code,),
+		)
+		existing = cursor.fetchone()
+
+		if existing:
+			course_id = existing['course_id']
+		else:
+			cursor.execute(
+				"INSERT INTO courses (course_code, course_name, credit_hours) VALUES (%s, %s, %s)",
+				(course_code, course_name, credit_hours),
+			)
+			course_id = cursor.lastrowid
+
+		# Auto-generate section_code (A, B, C, ...)
+		section_code = _next_section_code(course_id, int(semester_id))
+
+		cursor.execute(
 			"""INSERT INTO course_sections
 			       (course_id, semester_id, faculty_id, section_code, max_capacity)
 			   VALUES (%s, %s, %s, %s, %s)""",
 			(course_id, semester_id, faculty_id, section_code, max_capacity),
-			fetch=False,
 		)
+		conn.commit()
 		flash('Course created successfully.', 'success')
-	except Exception as e:
+	except MySQLError as e:
+		conn.rollback()
 		err = str(e).lower()
 		if 'duplicate' in err:
 			flash('This course section already exists for the selected semester.', 'danger')
+		elif 'chk_credit_hours' in err:
+			flash('Credit hours must be between 1 and 3.', 'danger')
 		else:
 			flash(f'Error creating course: {e}', 'danger')
+	finally:
+		cursor.close()
+		conn.close()
 
 	return _redirect_back('admin.courses')
 
@@ -849,3 +895,104 @@ def update_faculty(faculty_id):
 
 	flash('Faculty updated successfully.', 'success')
 	return redirect(url_for('admin.faculty_list'))
+
+
+# ── Timetable Management ──────────────────────────────────────
+
+@admin_bp.route('/timetable')
+@login_required
+@role_required('admin')
+def timetable():
+	semesters = execute_query(
+		"SELECT semester_id, name FROM semesters ORDER BY start_date DESC"
+	)
+	selected_semester = request.args.get('semester_id', '')
+	selected_section = request.args.get('section_id', '')
+
+	sections = []
+	slots = []
+	if selected_semester:
+		sections = execute_query(
+			"""SELECT cs.section_id, c.course_code, c.course_name, cs.section_code,
+			          CONCAT(f.first_name, ' ', f.last_name) AS faculty_name
+			   FROM course_sections cs
+			   JOIN courses c ON cs.course_id = c.course_id
+			   LEFT JOIN faculty f ON cs.faculty_id = f.faculty_id
+			   WHERE cs.semester_id = %s
+			   ORDER BY c.course_code, cs.section_code""",
+			(selected_semester,)
+		)
+
+	if selected_semester:
+		query = """SELECT ts.slot_id, ts.section_id, ts.day_of_week, ts.start_time, ts.end_time, ts.room,
+		                  c.course_code, c.course_name, cs.section_code,
+		                  CONCAT(f.first_name, ' ', f.last_name) AS faculty_name
+		           FROM timetable_slots ts
+		           JOIN course_sections cs ON ts.section_id = cs.section_id
+		           JOIN courses c ON cs.course_id = c.course_id
+		           LEFT JOIN faculty f ON cs.faculty_id = f.faculty_id
+		           WHERE cs.semester_id = %s"""
+		params = [selected_semester]
+		if selected_section:
+			query += " AND ts.section_id = %s"
+			params.append(selected_section)
+		query += " ORDER BY FIELD(ts.day_of_week,'Mon','Tue','Wed','Thu','Fri'), ts.start_time"
+		slots = execute_query(query, tuple(params))
+
+	return render_template(
+		'admin/timetable.html',
+		semesters=semesters or [],
+		sections=sections or [],
+		slots=slots or [],
+		selected_semester=selected_semester,
+		selected_section=selected_section,
+	)
+
+
+@admin_bp.route('/timetable/add', methods=['POST'])
+@login_required
+@role_required('admin')
+def timetable_add():
+	section_id = request.form.get('section_id', '').strip()
+	day_of_week = request.form.get('day_of_week', '').strip()
+	start_time = request.form.get('start_time', '').strip()
+	end_time = request.form.get('end_time', '').strip()
+	room = request.form.get('room', '').strip()
+	semester_id = request.form.get('semester_id', '')
+
+	if not all([section_id, day_of_week, start_time, end_time]):
+		flash('Section, day, start time, and end time are required.', 'danger')
+		return redirect(url_for('admin.timetable', semester_id=semester_id))
+
+	try:
+		execute_query(
+			"""INSERT INTO timetable_slots (section_id, day_of_week, start_time, end_time, room)
+			   VALUES (%s, %s, %s, %s, %s)""",
+			(section_id, day_of_week, start_time, end_time, room),
+			fetch=False,
+		)
+		flash('Time slot added successfully.', 'success')
+	except Exception as e:
+		err = str(e).lower()
+		if 'duplicate' in err:
+			flash('This time slot already exists for the selected section.', 'danger')
+		else:
+			flash(f'Error adding time slot: {e}', 'danger')
+
+	return redirect(url_for('admin.timetable', semester_id=semester_id, section_id=section_id))
+
+
+@admin_bp.route('/timetable/delete/<int:slot_id>', methods=['POST'])
+@login_required
+@role_required('admin')
+def timetable_delete(slot_id):
+	semester_id = request.form.get('semester_id', '')
+	section_id = request.form.get('section_id', '')
+	execute_query(
+		"DELETE FROM timetable_slots WHERE slot_id = %s",
+		(slot_id,),
+		fetch=False,
+	)
+	flash('Time slot removed.', 'success')
+	return redirect(url_for('admin.timetable', semester_id=semester_id, section_id=section_id))
+

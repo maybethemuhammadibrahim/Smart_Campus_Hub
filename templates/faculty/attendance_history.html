@@ -11,7 +11,7 @@
 {% if courses %}
 {% set courses_json = [] %}
 {% for c in courses %}
-  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section|default('A')}) %}
+  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section_code|default('A')}) %}
 {% endfor %}
 <div class="card card-static section-mb" style="padding: 14px 20px;">
   <div class="course-picker form-row" style="align-items:flex-end;"
@@ -47,7 +47,7 @@
       <tbody>
         {% for d in dates %}
         <tr>
-          <td style="font-weight:600;">📅 {{ d.class_date.strftime('%b %d, %Y') if d.class_date else d.class_date }}</td>
+          <td style="font-weight:600;"><i data-lucide="calendar" style="width:16px;height:16px;"></i> {{ d.class_date.strftime('%b %d, %Y') if d.class_date else d.class_date }}</td>
           <td><span class="badge badge-success">{{ d.present_count }}</span></td>
           <td><span class="badge badge-danger">{{ d.absent_count }}</span></td>
           <td><span class="badge badge-warning">{{ d.late_count }}</span></td>
@@ -95,7 +95,7 @@
             <td style="font-weight:600;">{{ r.first_name }} {{ r.last_name }}</td>
             <td>
               {% if r.status == 'present' %}
-                <span class="badge badge-success">✅ Present</span>
+                <span class="badge badge-success"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> Present</span>
               {% elif r.status == 'absent' %}
                 <span class="badge badge-danger">❌ Absent</span>
               {% else %}
@@ -112,7 +112,7 @@
 {% else %}
   <div class="card card-static">
     <div class="empty-state">
-      <div class="empty-state-icon">📅</div>
+      <div class="empty-state-icon"><i data-lucide="calendar" style="width:48px;height:48px;"></i></div>
       <h3>No attendance records</h3>
       <p>Select a course to view attendance history. Records will appear here once attendance is marked.</p>
     </div>

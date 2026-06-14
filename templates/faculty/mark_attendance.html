@@ -53,7 +53,7 @@
     <!-- Bulk Actions -->
     <div class="bulk-actions">
       <span style="font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;">Quick:</span>
-      <button type="button" class="bulk-btn present" data-mark-all="present">✅ All Present</button>
+      <button type="button" class="bulk-btn present" data-mark-all="present"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> All Present</button>
       <button type="button" class="bulk-btn absent" data-mark-all="absent">❌ All Absent</button>
       <button type="button" class="bulk-btn late" data-mark-all="late">⏰ All Late</button>
     </div>
@@ -76,7 +76,7 @@
               <div class="radio-group">
                 <label class="present-checked">
                   <input type="radio" name="status_{{ s.enrollment_id }}" value="present" checked>
-                  <span>✅ Present</span>
+                  <span><i data-lucide="check-circle" style="width:16px;height:16px;"></i> Present</span>
                 </label>
                 <label>
                   <input type="radio" name="status_{{ s.enrollment_id }}" value="absent">
@@ -95,12 +95,12 @@
     </div>
 
     <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
-      ✅ Submit Attendance
+      <i data-lucide="check-circle" style="width:16px;height:16px;"></i> Submit Attendance
     </button>
   {% else %}
     <div class="card card-static">
       <div class="empty-state">
-        <div class="empty-state-icon">✅</div>
+        <div class="empty-state-icon"><i data-lucide="check-circle" style="width:48px;height:48px;"></i></div>
         <h3>No students to mark</h3>
         <p>Select a course and section above to see enrolled students.</p>
       </div>

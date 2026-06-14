@@ -17,7 +17,7 @@
 {% if courses %}
 {% set courses_json = [] %}
 {% for c in courses %}
-  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section|default('A')}) %}
+  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section_code|default('A')}) %}
 {% endfor %}
 <div class="card card-static section-mb" style="padding: 14px 20px;">
   <div class="course-picker form-row" style="align-items:flex-end;"
@@ -40,28 +40,28 @@
   <!-- Overview Stats -->
   <div class="stat-grid">
     <div class="stat-card">
-      <div class="stat-card-icon blue">👥</div>
+      <div class="stat-card-icon blue"><i data-lucide="users" style="width:22px;height:22px;"></i></div>
       <div class="stat-card-content">
         <div class="stat-number blue" data-count="{{ stats.total_students or 0 }}">0</div>
         <div class="stat-label">Total Students</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-card-icon emerald">📊</div>
+      <div class="stat-card-icon emerald"><i data-lucide="bar-chart-2" style="width:22px;height:22px;"></i></div>
       <div class="stat-card-content">
         <div class="stat-number emerald" data-count="{{ stats.avg_marks or 0 }}">0</div>
         <div class="stat-label">Average Marks</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-card-icon amber">🏆</div>
+      <div class="stat-card-icon amber"><i data-lucide="award" style="width:22px;height:22px;"></i></div>
       <div class="stat-card-content">
         <div class="stat-number amber" data-count="{{ stats.highest or 0 }}">0</div>
         <div class="stat-label">Highest Score</div>
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-card-icon purple">📋</div>
+      <div class="stat-card-icon purple"><i data-lucide="clipboard" style="width:22px;height:22px;"></i></div>
       <div class="stat-card-content">
         <div class="stat-number purple" data-count="{{ stats.avg_attendance or 0 }}">0</div>
         <div class="stat-label">Avg Attendance %</div>
@@ -118,7 +118,7 @@
               {% for s in top_students %}
               <tr>
                 <td>
-                  {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+                  {% if loop.index == 1 %}1st{% elif loop.index == 2 %}2nd{% elif loop.index == 3 %}3rd{% else %}{{ loop.index }}{% endif %}
                 </td>
                 <td style="font-weight:600;">{{ s.first_name }} {{ s.last_name }}</td>
                 <td>{{ s.marks_obtained }}</td>
@@ -143,7 +143,7 @@
   {% if at_risk %}
   <div class="card card-static section-mb" style="margin-top:20px;">
     <div class="card-header">
-      ⚠️ At-Risk Students
+      <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> At-Risk Students
       <span class="badge badge-danger">{{ at_risk|length }}</span>
     </div>
     {% for s in at_risk %}
@@ -154,7 +154,7 @@
       </div>
       <div class="risk-badges">
         {% if s.attendance is not none and s.attendance < 75 %}
-          <span class="badge badge-danger">📋 {{ s.attendance }}%</span>
+          <span class="badge badge-danger"><i data-lucide="clipboard" style="width:16px;height:16px;"></i> {{ s.attendance }}%</span>
         {% endif %}
         {% if s.letter_grade %}
           {% if s.letter_grade in ['F', 'C', 'C+'] %}
@@ -170,7 +170,7 @@
 {% else %}
   <div class="card card-static">
     <div class="empty-state">
-      <div class="empty-state-icon">📈</div>
+      <div class="empty-state-icon"><i data-lucide="trending-up" style="width:48px;height:48px;"></i></div>
       <h3>No analytics available</h3>
       <p>Select a course to view performance analytics.</p>
     </div>

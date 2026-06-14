@@ -36,7 +36,7 @@
   <div class="card card-static section-mb">
     <div class="card-header" style="padding:16px 20px; border-bottom:1px solid var(--border-color);">
       <h3 style="margin:0; font-size:15px; font-weight:700; color:var(--text-main);">
-        📅 {{ block.semester_name }}
+        <i data-lucide="calendar" style="width:16px;height:16px;"></i> {{ block.semester_name }}
       </h3>
     </div>
     <div class="table-wrap" style="margin:0;">
@@ -105,7 +105,7 @@
 {% else %}
   <div class="card card-static section-mb">
     <div class="empty-state">
-      <div class="empty-state-icon">🎓</div>
+      <div class="empty-state-icon"><i data-lucide="graduation-cap" style="width:48px;height:48px;"></i></div>
       <h3>No transcript records</h3>
       <p>Your transcript will be generated once grades are finalized.</p>
     </div>

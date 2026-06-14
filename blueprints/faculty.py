@@ -5,7 +5,6 @@ from flask import (
     request, session, url_for,
 )
 from mysql.connector import Error as MySQLError
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from db_connector import execute_query
 from decorators import login_required, role_required
@@ -463,19 +462,30 @@ def save_grades():
         letter, points = _compute_letter_grade(marks)
 
         try:
-            execute_query(
-                """INSERT INTO grades (
-                        enrollment_id, marks_obtained, total_marks, letter_grade, grade_points
-                    )
-                    VALUES (%s, %s, 100, %s, %s)
-                    ON DUPLICATE KEY UPDATE
-                        marks_obtained = VALUES(marks_obtained),
-                        total_marks = VALUES(total_marks),
-                        letter_grade = VALUES(letter_grade),
-                        grade_points = VALUES(grade_points)""",
-                (enrollment_id, marks, letter, points),
-                fetch=False,
+            # Check if grade row already exists (created by SP during enrollment)
+            existing = execute_query(
+                "SELECT grade_id FROM grades WHERE enrollment_id = %s",
+                (enrollment_id,),
             )
+            if existing:
+                # UPDATE existing grade row
+                execute_query(
+                    """UPDATE grades
+                       SET marks_obtained = %s, total_marks = 100,
+                           letter_grade = %s, grade_points = %s
+                       WHERE enrollment_id = %s""",
+                    (marks, letter, points, enrollment_id),
+                    fetch=False,
+                )
+            else:
+                # INSERT new grade row
+                execute_query(
+                    """INSERT INTO grades
+                           (enrollment_id, marks_obtained, total_marks, letter_grade, grade_points)
+                       VALUES (%s, %s, 100, %s, %s)""",
+                    (enrollment_id, marks, letter, points),
+                    fetch=False,
+                )
             updated += 1
         except MySQLError as e:
             errors += 1
@@ -566,9 +576,11 @@ def analytics(course_id):
                LEFT JOIN v_attendance_summary att ON att.enrollment_id = e.enrollment_id
                LEFT JOIN grades g ON g.enrollment_id = e.enrollment_id
                WHERE e.section_id = %s AND e.status = 'active'
-                 AND (att.attendance_percentage < 75
-                      OR g.letter_grade IN ('F', 'C', 'C+')
-                      OR g.marks_obtained < 65)
+                 AND (
+                     (att.attendance_percentage IS NOT NULL AND att.attendance_percentage < 75)
+                     OR g.letter_grade = 'F'
+                     OR (g.marks_obtained IS NOT NULL AND g.marks_obtained < 60)
+                 )
                ORDER BY COALESCE(g.marks_obtained, 0) ASC""",
             (course_id,),
         )
@@ -634,22 +646,31 @@ def change_password():
         flash('Password must be at least 4 characters long.', 'danger')
         return redirect(url_for('faculty.profile'))
 
-    # Verify current password
+    # Verify current password (support both hashed and plaintext — same as auth.py)
+    from werkzeug.security import check_password_hash as _check_hash
     user = execute_query("SELECT password FROM users WHERE user_id=%s", (user_id,))
     if not user:
         flash('User not found.', 'danger')
         return redirect(url_for('faculty.profile'))
 
-    if not check_password_hash(user[0]['password'], current_password):
+    stored_pw = user[0]['password']
+    password_ok = False
+    try:
+        password_ok = _check_hash(stored_pw, current_password)
+    except Exception:
+        pass
+    if not password_ok:
+        password_ok = (stored_pw == current_password)
+
+    if not password_ok:
         flash('Current password is incorrect.', 'danger')
         return redirect(url_for('faculty.profile'))
 
-    # Store hashed password
+    # Store new password (plaintext for dev)
     try:
-        hashed = generate_password_hash(new_password)
         execute_query(
             "UPDATE users SET password = %s WHERE user_id = %s",
-            (hashed, user_id),
+            (new_password, user_id),
             fetch=False,
         )
         flash('Password updated successfully.', 'success')
@@ -679,3 +700,26 @@ def api_course_students(course_id):
         (course_id,),
     )
     return jsonify(students)
+
+
+# ── timetable ────────────────────────────────────────────────
+
+@faculty_bp.route('/timetable')
+@login_required
+@role_required('faculty')
+def timetable():
+    fid = session['entity_id']
+    slots = execute_query(
+        """SELECT ts.day_of_week, ts.start_time, ts.end_time, ts.room,
+                  c.course_code, c.course_name, cs.section_code,
+                  sm.name AS semester_name
+           FROM timetable_slots ts
+           JOIN course_sections cs ON ts.section_id = cs.section_id
+           JOIN courses c ON cs.course_id = c.course_id
+           LEFT JOIN semesters sm ON cs.semester_id = sm.semester_id
+           WHERE cs.faculty_id = %s
+           ORDER BY FIELD(ts.day_of_week,'Mon','Tue','Wed','Thu','Fri'), ts.start_time""",
+        (fid,)
+    )
+    semester_name = slots[0]['semester_name'] if slots else ''
+    return render_template('faculty/timetable.html', slots=slots or [], semester_name=semester_name)

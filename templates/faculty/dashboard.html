@@ -14,28 +14,28 @@
 <!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-icon blue"><i data-lucide="book-open"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ courses|length if courses else 0 }}">0</div>
       <div class="stat-label">Courses Teaching</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">👥</div>
+    <div class="stat-card-icon emerald"><i data-lucide="users"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald" data-count="{{ total_students if total_students else 0 }}">0</div>
       <div class="stat-label">Total Students</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon amber">📋</div>
+    <div class="stat-card-icon amber"><i data-lucide="calendar-check"></i></div>
     <div class="stat-card-content">
       <div class="stat-number amber" data-count="{{ avg_attendance if avg_attendance else 0 }}">0</div>
       <div class="stat-label">Avg Attendance %</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon purple">📝</div>
+    <div class="stat-card-icon purple"><i data-lucide="file-text"></i></div>
     <div class="stat-card-content">
       <div class="stat-number purple" data-count="{{ avg_marks if avg_marks else 0 }}">0</div>
       <div class="stat-label">Avg Grade Score</div>
@@ -46,16 +46,16 @@
 <!-- Quick Actions -->
 <div class="quick-actions">
   <a href="{{ url_for('faculty.mark_attendance') }}" class="quick-action-btn">
-    <span class="qa-icon">✅</span> Mark Attendance
+    <span class="qa-icon"><i data-lucide="check-square" style="width:16px;height:16px;"></i></span> Mark Attendance
   </a>
   <a href="{{ url_for('faculty.enter_grades') }}" class="quick-action-btn">
-    <span class="qa-icon">📝</span> Enter Grades
+    <span class="qa-icon"><i data-lucide="edit-3" style="width:16px;height:16px;"></i></span> Enter Grades
   </a>
   <a href="{{ url_for('faculty.roster') }}" class="quick-action-btn">
-    <span class="qa-icon">👥</span> View Roster
+    <span class="qa-icon"><i data-lucide="users" style="width:16px;height:16px;"></i></span> View Roster
   </a>
   <a href="{{ url_for('faculty.analytics') }}" class="quick-action-btn">
-    <span class="qa-icon">📈</span> Analytics
+    <span class="qa-icon"><i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i></span> Analytics
   </a>
 </div>
 
@@ -94,7 +94,7 @@
       </div>
     {% else %}
       <div class="empty-state">
-        <div class="empty-state-icon">📚</div>
+        <div class="empty-state-icon"><i data-lucide="book-open" style="width:48px;height:48px;"></i></div>
         <h3>No courses assigned</h3>
         <p>Contact the administration to get courses assigned.</p>
       </div>
@@ -109,7 +109,7 @@
         {% for item in recent_activity %}
         <li class="activity-item">
           <div class="activity-icon {{ 'att' if item.type == 'attendance' else 'grade' }}">
-            {{ '✅' if item.type == 'attendance' else '📝' }}
+            <i data-lucide="{{ 'check-circle' if item.type == 'attendance' else 'file-text' }}" style="width:16px;height:16px;"></i>
           </div>
           <div>
             <div class="activity-text">
@@ -127,7 +127,7 @@
       </ul>
     {% else %}
       <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-icon"><i data-lucide="clipboard" style="width:48px;height:48px;"></i></div>
         <h3>No recent activity</h3>
         <p>Activity will appear here as you mark attendance and enter grades.</p>
       </div>

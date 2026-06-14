@@ -1,4 +1,4 @@
-"""Rebuild the database from scratch using the new normalized schema."""
+"""rebuild database"""
 import mysql.connector
 
 conn = mysql.connector.connect(host='127.0.0.1', port=3306, user='root', password='1234')
@@ -10,7 +10,7 @@ cursor.execute("USE smart_campus")
 conn.commit()
 print("✅ Database recreated")
 
-# ── Schema (without IF NOT EXISTS on indexes) ──
+# schema
 schema_stmts = [
     # users
     """CREATE TABLE users (
@@ -32,7 +32,7 @@ schema_stmts = [
         email VARCHAR(100) NOT NULL UNIQUE, department VARCHAR(100), designation VARCHAR(100),
         CONSTRAINT fk_faculty_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
         CONSTRAINT chk_faculty_email CHECK (email LIKE '%@%'))""",
-    # courses (catalog only)
+    # courses
     """CREATE TABLE courses (
         course_id INT AUTO_INCREMENT PRIMARY KEY, course_code VARCHAR(20) NOT NULL UNIQUE,
         course_name VARCHAR(150) NOT NULL, credit_hours TINYINT NOT NULL DEFAULT 3,
@@ -42,7 +42,7 @@ schema_stmts = [
         semester_id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(50) NOT NULL UNIQUE,
         start_date DATE NOT NULL, end_date DATE NOT NULL, is_active BOOLEAN DEFAULT FALSE,
         CONSTRAINT chk_semester_dates CHECK (end_date > start_date))""",
-    # course_sections
+    # course sections
     """CREATE TABLE course_sections (
         section_id INT AUTO_INCREMENT PRIMARY KEY, course_id INT NOT NULL,
         semester_id INT NOT NULL, faculty_id INT, section_code VARCHAR(20) NOT NULL,
@@ -76,14 +76,14 @@ schema_stmts = [
         CONSTRAINT chk_total_marks CHECK (total_marks > 0),
         CONSTRAINT chk_marks_obtained CHECK (marks_obtained BETWEEN 0 AND total_marks),
         CONSTRAINT chk_grade_points CHECK (grade_points BETWEEN 0.00 AND 4.00))""",
-    # audit_log
+    # audit log
     """CREATE TABLE audit_log (
         log_id INT AUTO_INCREMENT PRIMARY KEY, table_name VARCHAR(50) NOT NULL,
         record_id INT NOT NULL, action ENUM('INSERT','UPDATE','DELETE') NOT NULL,
         old_value TEXT, new_value TEXT, changed_by INT,
         changed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_audit_changed_by FOREIGN KEY (changed_by) REFERENCES users(user_id) ON DELETE SET NULL)""",
-    # Indexes
+    # indexes
     "CREATE INDEX idx_enrollments_student ON enrollments(student_id)",
     "CREATE INDEX idx_enrollments_section ON enrollments(section_id)",
     "CREATE INDEX idx_enrollments_status ON enrollments(status)",
@@ -99,12 +99,13 @@ for s in schema_stmts:
 conn.commit()
 print("✅ All tables + indexes created")
 
-# ── Views ──
+# views
 views = [
     """CREATE OR REPLACE VIEW v_student_transcript AS
     SELECT s.student_id, CONCAT(s.first_name,' ',s.last_name) AS student_name,
            c.course_code, c.course_name, c.credit_hours, cs.section_code,
-           sm.name AS semester_name, g.marks_obtained, g.total_marks,
+           sm.name AS semester_name, sm.start_date AS semester_start,
+           g.marks_obtained, g.total_marks,
            g.letter_grade, g.grade_points, e.status AS enrollment_status, e.enrolled_at
     FROM students s JOIN enrollments e ON s.student_id=e.student_id
     JOIN course_sections cs ON e.section_id=cs.section_id
@@ -114,7 +115,7 @@ views = [
 
     """CREATE OR REPLACE VIEW v_attendance_summary AS
     SELECT e.enrollment_id, e.student_id, e.section_id, c.course_name,
-           cs.section_code, sm.name AS semester_name,
+           cs.section_code, sm.name AS semester_name, sm.start_date AS semester_start,
            COUNT(a.attendance_id) AS total_classes,
            SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END) AS classes_attended,
            ROUND(SUM(CASE WHEN a.status='present' THEN 1 ELSE 0 END)
@@ -123,7 +124,7 @@ views = [
     JOIN courses c ON cs.course_id=c.course_id
     JOIN semesters sm ON cs.semester_id=sm.semester_id
     LEFT JOIN attendance a ON e.enrollment_id=a.enrollment_id
-    GROUP BY e.enrollment_id, e.student_id, e.section_id, c.course_name, cs.section_code, sm.name""",
+    GROUP BY e.enrollment_id, e.student_id, e.section_id, c.course_name, cs.section_code, sm.name, sm.start_date""",
 
     """CREATE OR REPLACE VIEW v_course_roster AS
     SELECT c.course_id, c.course_code, c.course_name, cs.section_id, cs.section_code,
@@ -164,7 +165,7 @@ for v in views:
 conn.commit()
 print("✅ All views created")
 
-# ── Triggers (no DELIMITER needed in Python) ──
+# triggers
 triggers = [
     """CREATE TRIGGER trg_grade_before_insert BEFORE INSERT ON grades FOR EACH ROW
     BEGIN
@@ -230,7 +231,7 @@ for t in triggers:
 conn.commit()
 print("✅ All triggers created")
 
-# ── Stored Procedures ──
+# stored procedures
 sps = [
     """CREATE PROCEDURE RegisterStudentInCourse(
         IN p_student_id INT, IN p_section_id INT,
@@ -284,7 +285,7 @@ for sp in sps:
 conn.commit()
 print("✅ All stored procedures created")
 
-# ── Seed Data ──
+# seed data
 seed = [
     """INSERT INTO users (user_id, username, password, role, is_active) VALUES
     (1,'admin_ali','$2b$12$X7j3wqA1x1L2Y8N0mQeR1uJkD4h6p9s2t5v8w0y3z6A9bC1dE2fG','admin',TRUE),
@@ -348,7 +349,7 @@ for s in seed:
 conn.commit()
 print("✅ Seed data inserted")
 
-# Verify
+# verify
 cursor.execute("SELECT COUNT(*) FROM course_sections")
 print(f"   course_sections: {cursor.fetchone()[0]} rows")
 cursor.execute("SELECT COUNT(*) FROM enrollments")

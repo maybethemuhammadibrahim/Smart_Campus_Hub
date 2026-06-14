@@ -5,34 +5,34 @@
 <!-- Welcome Banner -->
 <div class="welcome-banner">
   <h1>Admin Dashboard</h1>
-  <p>Smart Campus Academic Management — Monitor and manage the entire system</p>
+  <p>Nexora Campus Portal — Monitor and manage the entire system</p>
 </div>
 
 <!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">🎓</div>
+    <div class="stat-card-icon blue"><i data-lucide="graduation-cap"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ total_students if total_students else 0 }}">0</div>
       <div class="stat-label">Total Students</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">👨‍🏫</div>
+    <div class="stat-card-icon emerald"><i data-lucide="briefcase"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald" data-count="{{ total_faculty if total_faculty else 0 }}">0</div>
       <div class="stat-label">Total Faculty</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon amber">📚</div>
+    <div class="stat-card-icon amber"><i data-lucide="book-open"></i></div>
     <div class="stat-card-content">
       <div class="stat-number amber" data-count="{{ total_courses if total_courses else 0 }}">0</div>
       <div class="stat-label">Total Courses</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon purple">📋</div>
+    <div class="stat-card-icon purple"><i data-lucide="clipboard-list"></i></div>
     <div class="stat-card-content">
       <div class="stat-number purple" data-count="{{ total_enrollments if total_enrollments else 0 }}">0</div>
       <div class="stat-label">Active Enrollments</div>
@@ -43,16 +43,16 @@
 <!-- Quick Actions -->
 <div class="quick-actions">
   <button class="quick-action-btn" onclick="openModal('addStudentModal')">
-    <span class="qa-icon">➕</span> Add Student
+    <span class="qa-icon"><i data-lucide="user-plus" style="width:16px;height:16px;"></i></span> Add Student
   </button>
   <button class="quick-action-btn" onclick="openModal('addFacultyModal')">
-    <span class="qa-icon">➕</span> Add Faculty
+    <span class="qa-icon"><i data-lucide="user-plus" style="width:16px;height:16px;"></i></span> Add Faculty
   </button>
   <button class="quick-action-btn" onclick="openModal('createCourseModal')">
-    <span class="qa-icon">➕</span> Create Course
+    <span class="qa-icon"><i data-lucide="plus-circle" style="width:16px;height:16px;"></i></span> Create Course
   </button>
   <a href="{{ url_for('admin.reports') }}" class="quick-action-btn">
-    <span class="qa-icon">📈</span> View Reports
+    <span class="qa-icon"><i data-lucide="pie-chart" style="width:16px;height:16px;"></i></span> View Reports
   </a>
 </div>
 
@@ -82,7 +82,7 @@
     </div>
   {% else %}
     <div class="empty-state">
-      <div class="empty-state-icon">📋</div>
+      <div class="empty-state-icon"><i data-lucide="clipboard" style="width:48px;height:48px;"></i></div>
       <h3>No recent activity</h3>
       <p>System activity will appear here as events occur.</p>
     </div>

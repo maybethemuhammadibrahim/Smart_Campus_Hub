@@ -4,21 +4,21 @@
 {% block content %}
 <!-- Welcome Banner -->
 <div class="welcome-banner">
-  <h1>👤 My Profile</h1>
+  <h1><i data-lucide="user" style="width:16px;height:16px;"></i> My Profile</h1>
   <p>View your faculty information and manage your password</p>
 </div>
 
 <!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-icon blue"><i data-lucide="book-open" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ courses|length if courses else 0 }}">0</div>
       <div class="stat-label">Courses Assigned</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">👥</div>
+    <div class="stat-card-icon emerald"><i data-lucide="users" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald" data-count="{{ total_students if total_students else 0 }}">0</div>
       <div class="stat-label">Total Students</div>
@@ -32,7 +32,7 @@
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon amber">🏢</div>
+    <div class="stat-card-icon amber"><i data-lucide="building" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number-text">{{ faculty.department if faculty and faculty.department else '—' }}</div>
       <div class="stat-label">Department</div>
@@ -97,7 +97,7 @@
     <div class="card card-static" style="margin-bottom:20px;">
       <div class="card-header">
         Change Password
-        <span class="badge badge-warning">🔒 Security</span>
+        <span class="badge badge-warning"><i data-lucide="lock" style="width:14px;height:14px;"></i> Security</span>
       </div>
       <form method="POST" action="{{ url_for('faculty.change_password') }}">
         <div class="form-group">
@@ -116,7 +116,7 @@
                  placeholder="Re-enter new password" minlength="4">
         </div>
         <button type="submit" class="btn btn-primary" style="margin-top:8px;">
-          🔑 Update Password
+          <i data-lucide="key" style="width:14px;height:14px;"></i> Update Password
         </button>
       </form>
     </div>
@@ -140,7 +140,7 @@
             </div>
             <div style="text-align:right;">
               <div style="font-size:12px; color:var(--text-muted);">
-                👥 {{ course.enrolled_count if course.enrolled_count else 0 }} students
+                <i data-lucide="users" style="width:16px;height:16px;"></i> {{ course.enrolled_count if course.enrolled_count else 0 }} students
               </div>
               <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
                 📖 {{ course.credit_hours if course.credit_hours else 0 }} credits
@@ -152,13 +152,13 @@
 
         <!-- Quick Links -->
         <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
-          <a href="{{ url_for('faculty.roster') }}" class="btn btn-outline btn-sm">👥 View Roster</a>
-          <a href="{{ url_for('faculty.enter_grades') }}" class="btn btn-outline btn-sm">📝 Grades</a>
-          <a href="{{ url_for('faculty.analytics') }}" class="btn btn-outline btn-sm">📈 Analytics</a>
+          <a href="{{ url_for('faculty.roster') }}" class="btn btn-outline btn-sm"><i data-lucide="users" style="width:16px;height:16px;"></i> View Roster</a>
+          <a href="{{ url_for('faculty.enter_grades') }}" class="btn btn-outline btn-sm"><i data-lucide="edit-3" style="width:16px;height:16px;"></i> Grades</a>
+          <a href="{{ url_for('faculty.analytics') }}" class="btn btn-outline btn-sm"><i data-lucide="trending-up" style="width:16px;height:16px;"></i> Analytics</a>
         </div>
       {% else %}
         <div class="empty-state" style="padding:24px;">
-          <div class="empty-state-icon">📚</div>
+          <div class="empty-state-icon"><i data-lucide="book-open" style="width:48px;height:48px;"></i></div>
           <h3>No courses assigned</h3>
           <p>Contact the administration to get courses assigned.</p>
         </div>

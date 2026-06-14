@@ -4,35 +4,35 @@
 {% block content %}
 <!-- Welcome Banner -->
 <div class="welcome-banner">
-  <h1>👤 My Profile</h1>
+  <h1><i data-lucide="user" style="width:16px;height:16px;"></i> My Profile</h1>
   <p>View your student information and manage your password</p>
 </div>
 
 <!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-icon blue"><i data-lucide="book-open" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ enrolled_count }}">0</div>
       <div class="stat-label">Enrolled Courses</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">🎯</div>
+    <div class="stat-card-icon emerald"><i data-lucide="target" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald">{{ cgpa if cgpa else '0.00' }}</div>
       <div class="stat-label">Current CGPA</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon purple">🎓</div>
+    <div class="stat-card-icon purple"><i data-lucide="graduation-cap" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number-text">{{ student.program if student and student.program else '—' }}</div>
       <div class="stat-label">Program</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon amber">📅</div>
+    <div class="stat-card-icon amber"><i data-lucide="calendar" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number amber" data-count="{{ student.batch_year if student and student.batch_year else 0 }}">0</div>
       <div class="stat-label">Batch Year</div>
@@ -100,7 +100,7 @@
   <div class="card card-static">
     <div class="card-header">
       Change Password
-      <span class="badge badge-warning">🔒 Security</span>
+      <span class="badge badge-warning"><i data-lucide="lock" style="width:14px;height:14px;"></i> Security</span>
     </div>
     <form method="POST" action="{{ url_for('student.change_password') }}">
       <div class="form-group">
@@ -119,7 +119,7 @@
                placeholder="Re-enter new password" minlength="4">
       </div>
       <button type="submit" class="btn btn-primary" style="margin-top:8px;">
-        🔑 Update Password
+        <i data-lucide="key" style="width:14px;height:14px;"></i> Update Password
       </button>
     </form>
   </div>

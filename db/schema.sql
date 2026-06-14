@@ -1,32 +1,20 @@
--- ============================================================
--- Smart Campus Academic Management System — Schema
--- Covers: Ch.5 Relational Model, Ch.6 SQL DDL, Ch.14 Normalization
--- Normal Forms: All tables in 3NF / BCNF
--- ============================================================
+-- database schema
 
 CREATE DATABASE IF NOT EXISTS smart_campus;
 USE smart_campus;
 
--- ============================================================
--- TABLE 1: users
--- Central auth table. Roles: 'student', 'faculty', 'admin'
--- Separated from entity tables to avoid multi-valued attributes (2NF)
--- ============================================================
+-- users table
 CREATE TABLE IF NOT EXISTS users (
     user_id       INT AUTO_INCREMENT PRIMARY KEY,
     username      VARCHAR(50)  NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,         -- bcrypt hash
+    password VARCHAR(255) NOT NULL,         -- password hash
     role          ENUM('student','faculty','admin') NOT NULL,
     is_active     BOOLEAN DEFAULT TRUE,
     created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_username_len CHECK (LENGTH(username) >= 3)
 );
 
--- ============================================================
--- TABLE 2: students
--- FK to users. Avoids storing auth + personal data together (BCNF)
--- cgpa is now computed via v_student_cgpa view (not stored)
--- ============================================================
+-- students table
 CREATE TABLE IF NOT EXISTS students (
     student_id  INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL UNIQUE,
@@ -41,9 +29,7 @@ CREATE TABLE IF NOT EXISTS students (
     CONSTRAINT chk_student_email CHECK (email LIKE '%@%')
 );
 
--- ============================================================
--- TABLE 3: faculty
--- ============================================================
+-- faculty table
 CREATE TABLE IF NOT EXISTS faculty (
     faculty_id  INT AUTO_INCREMENT PRIMARY KEY,
     user_id     INT NOT NULL UNIQUE,
@@ -57,10 +43,7 @@ CREATE TABLE IF NOT EXISTS faculty (
     CONSTRAINT chk_faculty_email CHECK (email LIKE '%@%')
 );
 
--- ============================================================
--- TABLE 4: courses  (catalog only — no offering-level data)
--- Removed: semester, faculty_id, max_capacity
--- ============================================================
+-- courses table
 CREATE TABLE IF NOT EXISTS courses (
     course_id    INT AUTO_INCREMENT PRIMARY KEY,
     course_code  VARCHAR(20)  NOT NULL UNIQUE,
@@ -69,10 +52,7 @@ CREATE TABLE IF NOT EXISTS courses (
     CONSTRAINT chk_credit_hours CHECK (credit_hours BETWEEN 1 AND 3)
 );
 
--- ============================================================
--- TABLE 5: semesters
--- Represents an academic term/offering period
--- ============================================================
+-- semesters table
 CREATE TABLE IF NOT EXISTS semesters (
     semester_id INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(50)  NOT NULL UNIQUE,
@@ -82,10 +62,7 @@ CREATE TABLE IF NOT EXISTS semesters (
     CONSTRAINT chk_semester_dates CHECK (end_date > start_date)
 );
 
--- ============================================================
--- TABLE 6: course_sections
--- Resolves the offering of a course in a semester by a faculty member
--- ============================================================
+-- course sections table
 CREATE TABLE IF NOT EXISTS course_sections (
     section_id   INT AUTO_INCREMENT PRIMARY KEY,
     course_id    INT          NOT NULL,
@@ -103,10 +80,7 @@ CREATE TABLE IF NOT EXISTS course_sections (
     CONSTRAINT chk_cs_capacity CHECK (max_capacity BETWEEN 1 AND 500)
 );
 
--- ============================================================
--- TABLE 7: enrollments
--- Junction table: resolves M:N between students and course_sections
--- ============================================================
+-- enrollments table
 CREATE TABLE IF NOT EXISTS enrollments (
     enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id    INT NOT NULL,
@@ -120,31 +94,21 @@ CREATE TABLE IF NOT EXISTS enrollments (
     CONSTRAINT uq_enrollment UNIQUE (student_id, section_id)
 );
 
--- ============================================================
--- TABLE 8: attendance
--- One enrollment → many attendance records
--- date + enrollment_id → functional dependency (BCNF satisfied)
--- marked_by FK enforces referential integrity to users
--- ============================================================
+-- attendance table
 CREATE TABLE IF NOT EXISTS attendance (
     attendance_id INT AUTO_INCREMENT PRIMARY KEY,
     enrollment_id INT  NOT NULL,
     class_date    DATE NOT NULL,
     status        ENUM('present','absent','late') NOT NULL,
-    marked_by     INT,                            -- FK → users(user_id)
+    marked_by     INT,                            -- marked by user
     CONSTRAINT fk_attend_enrollment FOREIGN KEY (enrollment_id)
         REFERENCES enrollments(enrollment_id) ON DELETE CASCADE,
     CONSTRAINT fk_attend_marked_by  FOREIGN KEY (marked_by)
         REFERENCES users(user_id)             ON DELETE SET NULL,
     CONSTRAINT uq_attendance UNIQUE (enrollment_id, class_date)
-    -- No-future-date enforced via trg_attendance_before_insert / _before_update
 );
 
--- ============================================================
--- TABLE 9: grades
--- One enrollment → one grade record (1:1 via enrollment)
--- Stores raw marks + computed letter grade
--- ============================================================
+-- grades table
 CREATE TABLE IF NOT EXISTS grades (
     grade_id       INT AUTO_INCREMENT PRIMARY KEY,
     enrollment_id  INT          NOT NULL UNIQUE,
@@ -159,12 +123,7 @@ CREATE TABLE IF NOT EXISTS grades (
     CONSTRAINT chk_grade_points   CHECK (grade_points BETWEEN 0.00 AND 4.00)
 );
 
--- ============================================================
--- TABLE 10: audit_log
--- Tracks modifications to grades and attendance for accountability
--- Covers: Ch.20 Transaction Processing, data auditing
--- changed_by FK enforces referential integrity to users
--- ============================================================
+-- audit log table
 CREATE TABLE IF NOT EXISTS audit_log (
     log_id      INT AUTO_INCREMENT PRIMARY KEY,
     table_name  VARCHAR(50)  NOT NULL,
@@ -178,16 +137,3 @@ CREATE TABLE IF NOT EXISTS audit_log (
         REFERENCES users(user_id) ON DELETE SET NULL
 );
 
--- ============================================================
--- PERFORMANCE INDEXES
--- Covers: Ch.21 Concurrency & performance optimization
--- Note: idx_grades_enrollment removed — superseded by UNIQUE on enrollment_id
--- ============================================================
-CREATE INDEX IF NOT EXISTS idx_enrollments_student  ON enrollments(student_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_section  ON enrollments(section_id);
-CREATE INDEX IF NOT EXISTS idx_enrollments_status   ON enrollments(status);
-CREATE INDEX IF NOT EXISTS idx_attendance_date      ON attendance(class_date);
-CREATE INDEX IF NOT EXISTS idx_cs_course            ON course_sections(course_id);
-CREATE INDEX IF NOT EXISTS idx_cs_semester          ON course_sections(semester_id);
-CREATE INDEX IF NOT EXISTS idx_cs_faculty           ON course_sections(faculty_id);
-CREATE INDEX IF NOT EXISTS idx_audit_table_record   ON audit_log(table_name, record_id);

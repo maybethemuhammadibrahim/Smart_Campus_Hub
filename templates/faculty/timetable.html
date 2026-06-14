@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}My Timetable{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">My Timetable</h1>
+  <p class="page-subtitle">{{ semester_name or 'Weekly teaching schedule' }}</p>
+</div>
+
+{% if slots %}
+<div class="card card-static">
+  <div class="tt-grid-wrap">
+    <table class="tt-grid">
+      <thead>
+        <tr>
+          <th class="tt-time-col">TIME</th>
+          <th>Mon</th>
+          <th>Tue</th>
+          <th>Wed</th>
+          <th>Thu</th>
+          <th>Fri</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set time_slots_list = [] %}
+        {% for slot in slots %}
+          {% set t = slot.start_time|string %}
+          {% if t not in time_slots_list %}
+            {% if time_slots_list.append(t) %}{% endif %}
+          {% endif %}
+        {% endfor %}
+
+        {% set days = ['Mon','Tue','Wed','Thu','Fri'] %}
+        {% set colors = ['tt-blue','tt-green','tt-purple','tt-pink','tt-yellow','tt-cyan','tt-orange'] %}
+        {% set course_colors = {} %}
+        {% set ns = namespace(ci=0) %}
+
+        {% for time in time_slots_list %}
+        <tr>
+          <td class="tt-time-cell">{{ time[:5] if time|length > 5 else time }}</td>
+          {% for day in days %}
+            {% set found = namespace(slot=none) %}
+            {% for slot in slots %}
+              {% if slot.day_of_week == day and slot.start_time|string == time %}
+                {% set found.slot = slot %}
+              {% endif %}
+            {% endfor %}
+            {% if found.slot %}
+              {% set cc = found.slot.course_code %}
+              {% if cc not in course_colors %}
+                {% if course_colors.update({cc: colors[ns.ci % colors|length]}) %}{% endif %}
+                {% set ns.ci = ns.ci + 1 %}
+              {% endif %}
+              <td>
+                <div class="tt-cell {{ course_colors[cc] }}">
+                  <div class="tt-course-name">{{ found.slot.course_name }}</div>
+                  <div class="tt-room">{{ found.slot.room or '' }}</div>
+                </div>
+              </td>
+            {% else %}
+              <td><div class="tt-cell tt-empty"></div></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card card-static">
+  <div class="empty-state">
+    <div class="empty-state-icon"><i data-lucide="clock" style="width:48px;height:48px;"></i></div>
+    <h3>No timetable available</h3>
+    <p>Your teaching schedule will appear here once it is set by the administration.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

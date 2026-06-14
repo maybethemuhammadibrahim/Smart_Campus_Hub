@@ -1,5 +1,5 @@
 /* ============================================================
-   Smart Campus — Main JavaScript
+   Nexora Campus Portal — Main JavaScript
    ============================================================ */
 
 (function () {
@@ -12,7 +12,10 @@
 
     var toggleBtn = document.getElementById('themeToggle');
     if (toggleBtn) {
-      toggleBtn.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+      toggleBtn.innerHTML = theme === 'dark'
+        ? '<i data-lucide="sun" style="width:14px;height:14px;"></i> Light Mode'
+        : '<i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
   }
 

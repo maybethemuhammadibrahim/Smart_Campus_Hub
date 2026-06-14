@@ -7,7 +7,7 @@
     <h1 class="page-title" style="margin-bottom:0;">Manage Courses</h1>
     <p class="page-subtitle" style="margin-bottom:0;">Create, assign faculty, and manage all academic courses</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('createCourseModal')">➕ Create Course</button>
+  <button class="btn btn-primary" onclick="openModal('createCourseModal')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Create Course</button>
 </div>
 
 {% if courses %}
@@ -65,7 +65,7 @@
             <div class="btn-group">
               <button class="btn btn-outline btn-sm"
                       onclick="openAssignModal({{ c.course_id }}, '{{ c.course_code }}', '{{ c.course_name }}', {{ c.semester_id }}, '{{ c.semester_name }}')">
-                👨‍🏫 Assign
+                <i data-lucide="briefcase" style="width:16px;height:16px;"></i> Assign
               </button>
               <button class="btn btn-outline btn-sm"
                       onclick="openEditModal({{ c.course_id }}, '{{ c.course_code }}', '{{ c.course_name }}', {{ c.credit_hours }}, {{ c.semester_id }}, '{{ c.semester_name }}')">
@@ -82,7 +82,7 @@
 {% else %}
   <div class="card card-static">
     <div class="empty-state">
-      <div class="empty-state-icon">📚</div>
+      <div class="empty-state-icon"><i data-lucide="book-open" style="width:48px;height:48px;"></i></div>
       <h3>No courses found</h3>
       <p>Click "Create Course" to add your first course.</p>
     </div>
@@ -147,7 +147,7 @@
 <div class="modal-overlay" id="assignFacultyModal">
   <div class="modal-container">
     <div class="modal-header">
-      <h3>👨‍🏫 Assign Faculty</h3>
+      <h3><i data-lucide="briefcase" style="width:16px;height:16px;"></i> Assign Faculty</h3>
       <button class="modal-close" onclick="closeModal('assignFacultyModal')">&times;</button>
     </div>
     <form method="POST" action="{{ url_for('admin.assign_faculty') }}">

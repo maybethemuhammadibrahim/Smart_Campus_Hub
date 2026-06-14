@@ -7,20 +7,20 @@
     <h1 class="page-title" style="margin-bottom:0;">Manage Semesters</h1>
     <p class="page-subtitle" style="margin-bottom:0;">Create, edit, and analyze academic semesters</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('createSemesterModal')">➕ Create Semester</button>
+  <button class="btn btn-primary" onclick="openModal('createSemesterModal')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Create Semester</button>
 </div>
 
 <!-- Summary Stats -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">📋</div>
+    <div class="stat-card-icon blue"><i data-lucide="clipboard" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ total_semesters }}">0</div>
       <div class="stat-label">Total Semesters</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">✅</div>
+    <div class="stat-card-icon emerald"><i data-lucide="check-circle" style="width:22px;height:22px;"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald" data-count="{{ active_count }}">0</div>
       <div class="stat-label">Active Semesters</div>
@@ -43,7 +43,7 @@
     </div>
 
     <div class="semester-card-dates">
-      <span>📅 {{ sm.start_date.strftime('%b %d, %Y') if sm.start_date else '—' }}</span>
+      <span><i data-lucide="calendar" style="width:16px;height:16px;"></i> {{ sm.start_date.strftime('%b %d, %Y') if sm.start_date else '—' }}</span>
       <span class="semester-date-sep">→</span>
       <span>{{ sm.end_date.strftime('%b %d, %Y') if sm.end_date else '—' }}</span>
     </div>
@@ -68,7 +68,7 @@
     </div>
 
     <div class="semester-card-actions">
-      <a href="{{ url_for('admin.semester_stats', semester_id=sm.semester_id) }}" class="btn btn-primary btn-sm">📊 View Stats</a>
+      <a href="{{ url_for('admin.semester_stats', semester_id=sm.semester_id) }}" class="btn btn-primary btn-sm"><i data-lucide="bar-chart-2" style="width:16px;height:16px;"></i> View Stats</a>
       <button class="btn btn-outline btn-sm"
         onclick="openEditSemesterModal({{ sm.semester_id }}, '{{ sm.name }}', '{{ sm.start_date }}', '{{ sm.end_date }}', {{ 1 if sm.is_active else 0 }})">✏️ Edit</button>
       <form method="POST" action="{{ url_for('admin.delete_semester', semester_id=sm.semester_id) }}"
@@ -82,7 +82,7 @@
 {% else %}
 <div class="card card-static">
   <div class="empty-state">
-    <div class="empty-state-icon">📅</div>
+    <div class="empty-state-icon"><i data-lucide="calendar" style="width:48px;height:48px;"></i></div>
     <h3>No semesters found</h3>
     <p>Click "Create Semester" to add your first academic term.</p>
   </div>

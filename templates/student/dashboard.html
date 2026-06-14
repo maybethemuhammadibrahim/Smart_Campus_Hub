@@ -14,28 +14,28 @@
 <!-- Stat Cards -->
 <div class="stat-grid">
   <div class="stat-card">
-    <div class="stat-card-icon blue">📚</div>
+    <div class="stat-card-icon blue"><i data-lucide="book-open"></i></div>
     <div class="stat-card-content">
       <div class="stat-number blue" data-count="{{ enrolled|length }}">0</div>
       <div class="stat-label">Enrolled Courses</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon emerald">🎯</div>
+    <div class="stat-card-icon emerald"><i data-lucide="target"></i></div>
     <div class="stat-card-content">
       <div class="stat-number emerald">{{ cgpa if cgpa else '0.00' }}</div>
       <div class="stat-label">Current CGPA</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon amber">📅</div>
+    <div class="stat-card-icon amber"><i data-lucide="calendar"></i></div>
     <div class="stat-card-content">
       <div class="stat-number amber">{{ student.batch_year if student.batch_year else '—' }}</div>
       <div class="stat-label">Batch Year</div>
     </div>
   </div>
   <div class="stat-card">
-    <div class="stat-card-icon purple">🎓</div>
+    <div class="stat-card-icon purple"><i data-lucide="graduation-cap"></i></div>
     <div class="stat-card-content">
       <div class="stat-number purple">{{ student.program if student.program else '—' }}</div>
       <div class="stat-label">Program</div>
@@ -46,16 +46,16 @@
 <!-- Quick Actions -->
 <div class="quick-actions">
   <a href="{{ url_for('student.available_courses') }}" class="quick-action-btn">
-    <span class="qa-icon">📚</span> Browse Courses
+    <span class="qa-icon"><i data-lucide="book-open" style="width:16px;height:16px;"></i></span> Browse Courses
   </a>
   <a href="{{ url_for('student.attendance') }}" class="quick-action-btn">
-    <span class="qa-icon">📋</span> My Attendance
+    <span class="qa-icon"><i data-lucide="calendar-check" style="width:16px;height:16px;"></i></span> My Attendance
   </a>
   <a href="{{ url_for('student.grades') }}" class="quick-action-btn">
-    <span class="qa-icon">📝</span> My Grades
+    <span class="qa-icon"><i data-lucide="file-text" style="width:16px;height:16px;"></i></span> My Grades
   </a>
   <a href="{{ url_for('student.transcript') }}" class="quick-action-btn">
-    <span class="qa-icon">🎓</span> Transcript
+    <span class="qa-icon"><i data-lucide="graduation-cap" style="width:16px;height:16px;"></i></span> Transcript
   </a>
 </div>
 
@@ -96,7 +96,7 @@
     </div>
   {% else %}
     <div class="empty-state">
-      <div class="empty-state-icon">📚</div>
+      <div class="empty-state-icon"><i data-lucide="book-open" style="width:48px;height:48px;"></i></div>
       <h3>No courses enrolled</h3>
       <p>Visit the Courses page to enroll in available courses.</p>
     </div>

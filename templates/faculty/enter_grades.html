@@ -16,7 +16,7 @@
 {% if courses %}
 {% set courses_json = [] %}
 {% for c in courses %}
-  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section|default('A')}) %}
+  {% set _ = courses_json.append({'id': c.course_id, 'code': c.course_code, 'name': c.course_name, 'section': c.section_code|default('A')}) %}
 {% endfor %}
 <div class="card card-static section-mb" style="padding: 14px 20px;">
   <div class="course-picker form-row" style="align-items:flex-end;"
@@ -35,8 +35,7 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{{ url_for('faculty.save_grades') }}" id="gradeForm"
-      data-confirm="Save grades for all students in this course? This will also update student CGPAs.">
+<form method="POST" action="{{ url_for('faculty.save_grades') }}" id="gradeForm">
   <input type="hidden" name="course_id" value="{{ course_id }}">
 
   {% if students %}
@@ -96,7 +95,7 @@
   {% else %}
     <div class="card card-static">
       <div class="empty-state">
-        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-icon"><i data-lucide="edit-3" style="width:48px;height:48px;"></i></div>
         <h3>No students enrolled</h3>
         <p>There are no students enrolled in this course to grade.</p>
       </div>

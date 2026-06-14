@@ -7,7 +7,7 @@
     <h1 class="page-title" style="margin-bottom:0;">Manage Students</h1>
     <p class="page-subtitle" style="margin-bottom:0;">View, add, and manage all registered students</p>
   </div>
-  <button class="btn btn-primary" onclick="openModal('addStudentModal')">➕ Add New Student</button>
+  <button class="btn btn-primary" onclick="openModal('addStudentModal')"><i data-lucide="plus" style="width:14px;height:14px;"></i> Add New Student</button>
 </div>
 
 {% if students %}
@@ -59,7 +59,7 @@
 {% else %}
 <div class="card card-static">
   <div class="empty-state">
-    <div class="empty-state-icon">🎓</div>
+    <div class="empty-state-icon"><i data-lucide="graduation-cap" style="width:48px;height:48px;"></i></div>
     <h3>No students found</h3>
     <p>Click "Add New Student" to register your first student.</p>
   </div>

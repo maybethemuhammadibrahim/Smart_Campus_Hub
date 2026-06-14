@@ -1,9 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from werkzeug.security import check_password_hash, generate_password_hash
-from db_connector import execute_query
+from werkzeug.security import check_password_hash
+from db_connector import execute_query, call_procedure
 from decorators import login_required, role_required
-import mysql.connector
-from config import Config
 
 student_bp = Blueprint('student', __name__)
 
@@ -45,7 +43,13 @@ def dashboard():
 def available_courses():
     sid = session['entity_id']
 
-    # Fixed: use course_sections for seats, faculty, and section info
+    # ── UI-layer Rule 1 filter ──────────────────────────────────────────────
+    # Hide ALL sections of any course the student is already actively enrolled
+    # in during the same semester — not just the exact section they're in.
+    # This prevents the UI from offering CS-101-B when the student is already
+    # in CS-101-A.  The DB trigger (trg_enrollment_no_duplicate_course_in_semester)
+    # is the authoritative guard; this is a UX improvement on top of it.
+    # ────────────────────────────────────────────────────────────────────────
     courses = execute_query(
         """SELECT cs.section_id, c.course_code, c.course_name, c.credit_hours,
                   cs.section_code, sm.name AS semester_name,
@@ -53,13 +57,19 @@ def available_courses():
                   cs.max_capacity - COUNT(e.enrollment_id) AS seats_left
            FROM course_sections cs
            JOIN courses c ON cs.course_id = c.course_id
-           JOIN semesters sm ON cs.semester_id = sm.semester_id
+           JOIN semesters sm ON cs.semester_id = sm.semester_id AND sm.is_active = TRUE
            LEFT JOIN faculty f ON cs.faculty_id = f.faculty_id
            LEFT JOIN enrollments e ON cs.section_id = e.section_id AND e.status='active'
-           WHERE cs.section_id NOT IN (
-               SELECT section_id FROM enrollments
-               WHERE student_id=%s AND status='active'
-           )
+           WHERE
+               -- Rule 1: exclude sections of courses already taken this semester
+               cs.course_id NOT IN (
+                   SELECT cs2.course_id
+                   FROM enrollments e2
+                   JOIN course_sections cs2 ON e2.section_id = cs2.section_id
+                   WHERE e2.student_id = %s
+                     AND e2.status = 'active'
+                     AND cs2.semester_id = sm.semester_id
+               )
            GROUP BY cs.section_id, c.course_code, c.course_name, c.credit_hours,
                     cs.section_code, sm.name, f.first_name, f.last_name, cs.max_capacity
            HAVING seats_left > 0""",
@@ -72,26 +82,63 @@ def available_courses():
 @role_required('student')
 def enroll(section_id):
     sid = session['entity_id']
-    # Call stored procedure via direct connection (OUT params)
-    # SP now expects section_id (p_section_id)
-    conn   = mysql.connector.connect(
-        host=Config.DB_HOST, user=Config.DB_USER,
-        password=Config.DB_PASS, database=Config.DB_NAME
+
+    # ── Python pre-flight checks (application layer) ─────────────────────────
+    # These run BEFORE the stored procedure call so the user sees a clean
+    # flash message. The DB triggers (15 & 16) are the authoritative backstop
+    # for any bypass path; these checks just improve UX responsiveness.
+
+    # Rule 1: No enrollment in another section of the same course this semester
+    conflict_row = execute_query(
+        """SELECT COUNT(*) AS cnt
+           FROM   enrollments e
+           JOIN   course_sections cs  ON e.section_id  = cs.section_id
+           JOIN   course_sections cs2 ON cs2.section_id = %s
+           WHERE  e.student_id   = %s
+             AND  e.status        = 'active'
+             AND  cs.course_id    = cs2.course_id
+             AND  cs.semester_id  = cs2.semester_id""",
+        (section_id, sid)
     )
-    cursor = conn.cursor()
-    args   = (sid, section_id, '', 0)
-    cursor.callproc('RegisterStudentInCourse', args)
-    conn.commit()
-    # Fetch OUT params
-    for r in cursor.stored_results():
-        pass
-    # Re-query OUT values
-    cursor.execute("SELECT @_RegisterStudentInCourse_2, @_RegisterStudentInCourse_3")
-    row = cursor.fetchone()
-    message, success = row
-    cursor.close()
-    conn.close()
-    flash(message, "success" if success else "danger")
+    if conflict_row and conflict_row[0]['cnt'] > 0:
+        flash('You are already enrolled in another section of this course '
+              'this semester.', 'warning')
+        return redirect(url_for('student.available_courses'))
+
+    # Rule 2: Max 6 active courses per semester
+    overload_row = execute_query(
+        """SELECT COUNT(*) AS cnt
+           FROM   enrollments e
+           JOIN   course_sections cs  ON e.section_id  = cs.section_id
+           JOIN   course_sections cs2 ON cs2.section_id = %s
+           WHERE  e.student_id   = %s
+             AND  e.status        = 'active'
+             AND  cs.semester_id  = cs2.semester_id""",
+        (section_id, sid)
+    )
+    if overload_row and overload_row[0]['cnt'] >= 6:
+        flash('You have reached the maximum of 6 active courses '
+              'for this semester.', 'warning')
+        return redirect(url_for('student.available_courses'))
+    # ─────────────────────────────────────────────────────────────────────────
+
+    try:
+        # Use stored procedure — handles capacity, duplicates, both rules,
+        # and grade row creation inside a single atomic transaction.
+        result = call_procedure(
+            'RegisterStudentInCourse', (sid, section_id, '', 0)
+        )
+        # OUT params: result[2] = p_message, result[3] = p_success
+        sp_message = str(result[2]) if result[2] is not None else 'Enrollment processed.'
+        sp_success = int(result[3]) if result[3] is not None else 0
+
+        if sp_success:
+            flash(sp_message, 'success')
+        else:
+            flash(sp_message, 'warning')
+    except Exception as e:
+        flash(f"Error enrolling: {e}", "danger")
+
     return redirect(url_for('student.available_courses'))
 
 @student_bp.route('/attendance')
@@ -103,7 +150,7 @@ def attendance():
 
     # Distinct semesters this student has attendance records in
     semesters = execute_query(
-        "SELECT DISTINCT semester_name FROM v_attendance_summary WHERE student_id=%s ORDER BY semester_name",
+        "SELECT DISTINCT semester_name, semester_start FROM v_attendance_summary WHERE student_id=%s ORDER BY semester_start",
         (sid,),
     )
     semester_list = [r['semester_name'] for r in semesters if r.get('semester_name')]
@@ -136,7 +183,7 @@ def grades():
 
     # Distinct semesters this student has transcript/grade records in
     semesters = execute_query(
-        "SELECT DISTINCT semester_name FROM v_student_transcript WHERE student_id=%s ORDER BY semester_name",
+        "SELECT DISTINCT semester_name, semester_start FROM v_student_transcript WHERE student_id=%s ORDER BY semester_start",
         (sid,),
     )
     semester_list = [r['semester_name'] for r in semesters if r.get('semester_name')]
@@ -171,7 +218,7 @@ def grades():
 def transcript():
     sid = session['entity_id']
     data = execute_query(
-        "SELECT * FROM v_student_transcript WHERE student_id=%s ORDER BY semester_name, course_code",
+        "SELECT * FROM v_student_transcript WHERE student_id=%s ORDER BY semester_start, course_code",
         (sid,),
     )
     student = execute_query("SELECT * FROM students WHERE student_id=%s", (sid,))
@@ -266,16 +313,52 @@ def change_password():
         flash('User not found.', 'danger')
         return redirect(url_for('student.profile'))
 
-    if not check_password_hash(user[0]['password'], current_password):
+    # Verify current password (support both hashed and plaintext — same as auth.py)
+    stored_pw = user[0]['password']
+    password_ok = False
+    try:
+        password_ok = check_password_hash(stored_pw, current_password)
+    except Exception:
+        pass
+    if not password_ok:
+        password_ok = (stored_pw == current_password)
+
+    if not password_ok:
         flash('Current password is incorrect.', 'danger')
         return redirect(url_for('student.profile'))
 
-    # Store hashed password
-    hashed = generate_password_hash(new_password)
+    # Store new password (plaintext for dev)
     execute_query(
         "UPDATE users SET password = %s WHERE user_id = %s",
-        (hashed, user_id),
+        (new_password, user_id),
         fetch=False,
     )
     flash('Password updated successfully.', 'success')
     return redirect(url_for('student.profile'))
+
+
+@student_bp.route('/timetable')
+@login_required
+@role_required('student')
+def timetable():
+    sid = session['entity_id']
+    slots = execute_query(
+        """SELECT ts.day_of_week, ts.start_time, ts.end_time, ts.room,
+                  c.course_code, c.course_name, cs.section_code,
+                  CONCAT(f.first_name, ' ', f.last_name) AS faculty_name,
+                  sm.name AS semester_name
+           FROM timetable_slots ts
+           JOIN course_sections cs ON ts.section_id = cs.section_id
+           JOIN courses c ON cs.course_id = c.course_id
+           LEFT JOIN faculty f ON cs.faculty_id = f.faculty_id
+           LEFT JOIN semesters sm ON cs.semester_id = sm.semester_id
+           WHERE ts.section_id IN (
+               SELECT e.section_id FROM enrollments e
+               WHERE e.student_id = %s AND e.status = 'active'
+           )
+           ORDER BY FIELD(ts.day_of_week,'Mon','Tue','Wed','Thu','Fri'), ts.start_time""",
+        (sid,)
+    )
+    # Get semester name for display
+    semester_name = slots[0]['semester_name'] if slots else ''
+    return render_template('student/timetable.html', slots=slots or [], semester_name=semester_name)

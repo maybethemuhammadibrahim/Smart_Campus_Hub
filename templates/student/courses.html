@@ -42,7 +42,7 @@
           </td>
           <td>
             <form method="POST" action="{{ url_for('student.enroll', section_id=course.section_id) }}" style="display:inline;" data-confirm="Are you sure you want to enroll in {{ course.course_name }}?">
-              <button type="submit" class="btn btn-primary btn-sm">➕ Enroll</button>
+              <button type="submit" class="btn btn-primary btn-sm"><i data-lucide="plus" style="width:14px;height:14px;"></i> Enroll</button>
             </form>
           </td>
         </tr>
@@ -53,7 +53,7 @@
 {% else %}
   <div class="card card-static">
     <div class="empty-state">
-      <div class="empty-state-icon">🎉</div>
+      <div class="empty-state-icon"><i data-lucide="inbox" style="width:48px;height:48px;"></i></div>
       <h3>No courses available</h3>
       <p>All available courses are either full or you are already enrolled in them.</p>
     </div>

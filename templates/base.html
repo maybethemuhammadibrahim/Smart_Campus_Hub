@@ -3,103 +3,113 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Smart Campus Academic Management System">
-  <title>Smart Campus — {% block title %}Dashboard{% endblock %}</title>
+  <meta name="description" content="Nexora Campus Portal — Academic Management System">
+  <title>Nexora Campus — {% block title %}Dashboard{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
 <body>
 
   <!-- Mobile Sidebar Toggle -->
-  <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+  <button class="sidebar-toggle" id="sidebarToggle"><i data-lucide="menu" class="lucide-icon"></i></button>
 
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-brand">
-      <h1>Smart Campus</h1>
-      <span>Academic Management</span>
+      <h1>Nexora Campus</h1>
+      <span>CAMPUS PORTAL</span>
     </div>
 
     <nav class="sidebar-nav">
       {% if session.get('role') == 'student' %}
         <div class="nav-section-label">Main</div>
         <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
-          <span class="nav-icon">📊</span> Dashboard
+          <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
         </a>
         <a href="{{ url_for('student.available_courses') }}" class="nav-link {% if request.endpoint == 'student.available_courses' %}active{% endif %}">
-          <span class="nav-icon">📚</span> Courses
+          <span class="nav-icon"><i data-lucide="book-open"></i></span> Courses
         </a>
         <a href="{{ url_for('student.attendance') }}" class="nav-link {% if request.endpoint == 'student.attendance' %}active{% endif %}">
-          <span class="nav-icon">📋</span> Attendance
+          <span class="nav-icon"><i data-lucide="calendar-check"></i></span> Attendance
         </a>
         <a href="{{ url_for('student.grades') }}" class="nav-link {% if request.endpoint == 'student.grades' %}active{% endif %}">
-          <span class="nav-icon">📝</span> Grades
+          <span class="nav-icon"><i data-lucide="file-text"></i></span> Grades
         </a>
         <a href="{{ url_for('student.transcript') }}" class="nav-link {% if request.endpoint == 'student.transcript' %}active{% endif %}">
-          <span class="nav-icon">🎓</span> Transcript
+          <span class="nav-icon"><i data-lucide="graduation-cap"></i></span> Transcript
+        </a>
+        <a href="{{ url_for('student.timetable') }}" class="nav-link {% if request.endpoint == 'student.timetable' %}active{% endif %}">
+          <span class="nav-icon"><i data-lucide="clock"></i></span> Timetable
         </a>
         <div class="nav-section-label">Account</div>
         <a href="{{ url_for('student.profile') }}" class="nav-link {% if request.endpoint == 'student.profile' %}active{% endif %}">
-          <span class="nav-icon">👤</span> Profile
+          <span class="nav-icon"><i data-lucide="user"></i></span> Profile
         </a>
 
       {% elif session.get('role') == 'faculty' %}
         <div class="nav-section-label">Main</div>
         <a href="{{ url_for('faculty.dashboard') }}" class="nav-link {% if request.endpoint == 'faculty.dashboard' %}active{% endif %}">
-          <span class="nav-icon">📊</span> Dashboard
+          <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
         </a>
         <a href="{{ url_for('faculty.my_courses') }}" class="nav-link {% if request.endpoint == 'faculty.my_courses' %}active{% endif %}">
-          <span class="nav-icon">📚</span> My Courses
+          <span class="nav-icon"><i data-lucide="book-open"></i></span> My Courses
         </a>
         <div class="nav-section-label">Actions</div>
         <a href="{{ url_for('faculty.roster') }}" class="nav-link {% if request.endpoint == 'faculty.roster' %}active{% endif %}">
-          <span class="nav-icon">👥</span> Roster
+          <span class="nav-icon"><i data-lucide="users"></i></span> Roster
         </a>
         <a href="{{ url_for('faculty.mark_attendance') }}" class="nav-link {% if request.endpoint == 'faculty.mark_attendance' %}active{% endif %}">
-          <span class="nav-icon">✅</span> Mark Attendance
+          <span class="nav-icon"><i data-lucide="check-square"></i></span> Mark Attendance
         </a>
         <a href="{{ url_for('faculty.attendance_history') }}" class="nav-link {% if request.endpoint == 'faculty.attendance_history' %}active{% endif %}">
-          <span class="nav-icon">📅</span> Attendance History
+          <span class="nav-icon"><i data-lucide="calendar"></i></span> Attendance History
         </a>
         <a href="{{ url_for('faculty.enter_grades') }}" class="nav-link {% if request.endpoint == 'faculty.enter_grades' %}active{% endif %}">
-          <span class="nav-icon">📝</span> Enter Grades
+          <span class="nav-icon"><i data-lucide="edit-3"></i></span> Enter Grades
         </a>
         <a href="{{ url_for('faculty.analytics') }}" class="nav-link {% if request.endpoint == 'faculty.analytics' %}active{% endif %}">
-          <span class="nav-icon">📈</span> Analytics
+          <span class="nav-icon"><i data-lucide="bar-chart-2"></i></span> Analytics
+        </a>
+        <a href="{{ url_for('faculty.timetable') }}" class="nav-link {% if request.endpoint == 'faculty.timetable' %}active{% endif %}">
+          <span class="nav-icon"><i data-lucide="clock"></i></span> Timetable
         </a>
         <div class="nav-section-label">Account</div>
         <a href="{{ url_for('faculty.profile') }}" class="nav-link {% if request.endpoint == 'faculty.profile' %}active{% endif %}">
-          <span class="nav-icon">👤</span> Profile
+          <span class="nav-icon"><i data-lucide="user"></i></span> Profile
         </a>
 
       {% elif session.get('role') == 'admin' %}
         <div class="nav-section-label">Overview</div>
         <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
-          <span class="nav-icon">📊</span> Dashboard
+          <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
         </a>
         <div class="nav-section-label">Management</div>
         <a href="{{ url_for('admin.students') }}" class="nav-link {% if request.endpoint == 'admin.students' %}active{% endif %}">
-          <span class="nav-icon">🎓</span> Students
+          <span class="nav-icon"><i data-lucide="graduation-cap"></i></span> Students
         </a>
         <a href="{{ url_for('admin.faculty_list') }}" class="nav-link {% if request.endpoint == 'admin.faculty_list' %}active{% endif %}">
-          <span class="nav-icon">👨‍🏫</span> Faculty
+          <span class="nav-icon"><i data-lucide="briefcase"></i></span> Faculty
         </a>
         <a href="{{ url_for('admin.courses') }}" class="nav-link {% if request.endpoint == 'admin.courses' %}active{% endif %}">
-          <span class="nav-icon">📚</span> Courses
+          <span class="nav-icon"><i data-lucide="book-open"></i></span> Courses
         </a>
         <a href="{{ url_for('admin.semesters') }}" class="nav-link {% if request.endpoint in ['admin.semesters', 'admin.semester_stats'] %}active{% endif %}">
-          <span class="nav-icon">📅</span> Semesters
+          <span class="nav-icon"><i data-lucide="calendar-days"></i></span> Semesters
         </a>
         <a href="{{ url_for('admin.reports') }}" class="nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
-          <span class="nav-icon">📈</span> Reports
+          <span class="nav-icon"><i data-lucide="pie-chart"></i></span> Reports
+        </a>
+        <a href="{{ url_for('admin.timetable') }}" class="nav-link {% if request.endpoint == 'admin.timetable' %}active{% endif %}">
+          <span class="nav-icon"><i data-lucide="clock"></i></span> Timetable
         </a>
       {% endif %}
     </nav>
 
     <div class="sidebar-footer">
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">🌙 Dark Mode</button>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"><i data-lucide="moon" style="width:14px;height:14px;"></i> Dark Mode</button>
       {% if session.get('user_id') %}
         <div class="sidebar-user">
           <div class="sidebar-user-avatar">{{ session.username[0]|upper }}</div>
@@ -108,7 +118,7 @@
             <div class="sidebar-user-role">{{ session.role }}</div>
           </div>
         </div>
-        <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-full">⬅ Sign Out</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-full"><i data-lucide="log-out" style="width:14px;height:14px;"></i> Sign Out</a>
       {% endif %}
     </div>
   </aside>
@@ -130,7 +140,7 @@
   <div class="modal-overlay" id="confirmModal">
     <div class="modal-container">
       <div class="modal-header">
-        <h3>⚠️ Confirm Action</h3>
+        <h3><i data-lucide="alert-triangle" style="width:18px;height:18px;color:var(--accent-amber);vertical-align:middle;"></i> Confirm Action</h3>
         <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
       </div>
       <div class="modal-body">
@@ -144,5 +154,11 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+  </script>
 </body>
 </html>

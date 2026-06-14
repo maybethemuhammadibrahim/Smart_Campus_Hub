@@ -22,7 +22,7 @@
         <div class="course-card-name">{{ course.course_name }}</div>
         <div class="course-card-meta">
           <span>📖 {{ course.credit_hours }} Credits</span>
-          <span>👥 {{ course.enrolled_count if course.enrolled_count else 0 }} / {{ course.max_capacity if course.max_capacity else '—' }}</span>
+          <span><i data-lucide="users" style="width:16px;height:16px;"></i> {{ course.enrolled_count if course.enrolled_count else 0 }} / {{ course.max_capacity if course.max_capacity else '—' }}</span>
         </div>
         {% if course.max_capacity and course.enrolled_count %}
           {% set pct = ((course.enrolled_count / course.max_capacity) * 100)|round(0)|int %}
@@ -37,9 +37,9 @@
         {% endif %}
       </div>
       <div class="card-footer">
-        <a href="{{ url_for('faculty.roster', course_id=course.course_id) }}" class="btn btn-outline btn-sm">👥 Roster</a>
-        <a href="{{ url_for('faculty.mark_attendance', course_id=course.course_id) }}" class="btn btn-outline btn-sm">✅ Attendance</a>
-        <a href="{{ url_for('faculty.enter_grades', course_id=course.course_id) }}" class="btn btn-primary btn-sm">📝 Grades</a>
+        <a href="{{ url_for('faculty.roster', course_id=course.course_id) }}" class="btn btn-outline btn-sm"><i data-lucide="users" style="width:16px;height:16px;"></i> Roster</a>
+        <a href="{{ url_for('faculty.mark_attendance', course_id=course.course_id) }}" class="btn btn-outline btn-sm"><i data-lucide="check-circle" style="width:16px;height:16px;"></i> Attendance</a>
+        <a href="{{ url_for('faculty.enter_grades', course_id=course.course_id) }}" class="btn btn-primary btn-sm"><i data-lucide="edit-3" style="width:16px;height:16px;"></i> Grades</a>
       </div>
     </div>
     {% endfor %}
@@ -47,7 +47,7 @@
 {% else %}
   <div class="card card-static">
     <div class="empty-state">
-      <div class="empty-state-icon">📚</div>
+      <div class="empty-state-icon"><i data-lucide="book-open" style="width:48px;height:48px;"></i></div>
       <h3>No courses assigned</h3>
       <p>You currently have no courses assigned to you.</p>
     </div>
